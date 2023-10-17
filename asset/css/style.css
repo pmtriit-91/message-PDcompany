@@ -1,0 +1,94 @@
+body {
+    background: #f0f2f5;
+}
+
+.wrapper {
+    height: 100vh;
+}
+
+.text-brand {
+    color: #1877f2;
+}
+
+.text-h1 {
+    font-weight: 500;
+    font-size: 2rem;
+}
+
+.text-h2 {
+    font-weight: 400;
+    color: #1c1e21;
+    font-size: 1.625rem;
+}
+
+.text-p {
+    font-weight: 400;
+    font-size: 1rem;
+    color: #606770;
+}
+
+.wrapper-left-header,
+.wrapper-left-body {
+    padding-bottom: 12px;
+}
+
+.wrapper-left-account {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.account-prev {
+    width: 160px;
+    box-shadow: 0 0 0 1px #dddfe2;
+    border-radius: 8px;
+    transition: all .2s ease-out;
+}
+
+.account-prev:hover {
+    box-shadow: 0 1px 8px 5px #dddfe2;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.account-image {
+    width: 160px;
+    height: 160px;
+    text-align: center;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+}
+
+.account-name {
+    font-size: 1.2rem;
+    font-weight: 400;
+    width: 160px;
+    text-align: center;
+    margin-bottom: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background-color: #fff;
+}
+
+.text-add {
+    padding: 5px 0;
+    color: #1877f2;
+}
+
+.account-image.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (min-width: 576px) {}
+
+
+@media (min-width: 768px) {}
+
+
+@media (min-width: 992px) {}
+
+
+@media (min-width: 1200px) {}
