@@ -6,10 +6,6 @@ body {
     height: 100vh;
 }
 
-.text-brand {
-    color: #1877f2;
-}
-
 .text-h1 {
     font-weight: 500;
     font-size: 2rem;
@@ -27,6 +23,11 @@ body {
     color: #606770;
 }
 
+.text-brand {
+    color: #1877f2;
+    font-size: 2.5rem;
+}
+
 .wrapper-left-header,
 .wrapper-left-body {
     padding-bottom: 12px;
@@ -35,6 +36,10 @@ body {
 .wrapper-left-account {
     padding-left: 0;
     padding-right: 0;
+}
+
+.wrapper-left-account .row .col {
+    margin-bottom: 20px;
 }
 
 .account-prev {
@@ -82,13 +87,70 @@ body {
     justify-content: center;
 }
 
+.wrapper-form {
+    height: 500px;
+    /* align-items: flex-end; */
+    align-items: center;
+}
+
+.card {
+    /* height: 100%; */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .1), 0 8px 16px rgba(0, 0, 0, .1);
+    margin: 40px 0 0;
+    padding: 20px;
+    width: 396px;
+}
+
+.form-control {
+    padding: 14px 16px;
+    border-radius: 8px;
+}
+
+.form-control-modal {
+    padding: 10px 16px;
+}
+
+.btn-create {
+    background-color: #42b72a;
+    border: none;
+}
+
+.input-group-append {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.input-date {
+    padding: 10px 16px;
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+}
+
+.input-group-text {
+    border: none;
+}
+
 @media (min-width: 576px) {}
 
 
 @media (min-width: 768px) {}
 
 
-@media (min-width: 992px) {}
+@media (min-width: 992px) {
+    .wrapper-left-account {
+        width: 80%;
+        margin: 0;
+    }
+}
 
 
-@media (min-width: 1200px) {}
+@media (min-width: 1200px) {
+    .wrapper-left-account {
+        width: 100%;
+    }
+}
+
+@media (min-width: 1400px) {}

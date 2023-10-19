@@ -1,0 +1,79 @@
+.wrapper {
+    padding-top: 50px;
+    padding-bottom: 50px;
+    height: 100vh;
+}
+
+.container {
+    padding-top: 50px;
+    padding-bottom: 50px;
+    background: white;
+    border-radius: 8px;
+    height: 90vh;
+}
+
+.card {
+    padding: 20px;
+}
+
+.wrapper-left {
+    height: 80vh;
+    padding: 0;
+}
+
+.body {
+    overflow-y: auto;
+    max-height: 66vh;
+    padding-left: 50px;
+    margin-top: 20px;
+}
+
+.body .card {
+    max-height: 100px;
+    padding: 0;
+    border: none;
+}
+
+.body .card:hover {
+    background-color: rgba(205, 196, 249, 0.2);
+    transition: all 0.2s ease-out;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.custom-img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-img .img-fluid {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.wrapper-right {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    border: none;
+}
+
+.wrapper-chat {
+    position: fixed;
+    bottom: 50px;
+    margin-bottom: 50px;
+}
+
+.input-custom {
+    margin-left: 15px;
+    margin-right: 15px;
+}

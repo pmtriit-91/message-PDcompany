@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"
+        integrity="sha384-rOA1PnstxnOBLzCLMcre8ybwbTmemjzdNlILg8O7z1lUkLXozs4DHonlDtnE7fpc"
+        crossorigin="anonymous"></script>
+    <!-- bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
+    <!-- style -->
+    <link rel="stylesheet" href="/asset/css/login.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row align-items-center wrapper">
+            <div class="col">
+                <div class="wrapper-left-header">
+                    <h1 class="text-h1 text-brand">
+                        Boxchat
+                    </h1>
+                </div>
+                <div class="wrapper-left-body">
+                    <h2 class="text-h2 m-0">
+                        Đăng nhập gần đây
+                    </h2>
+                    <p class="text-p">
+                        Nhấp vào ảnh của bạn hoặc thêm tài khoản.
+                    </p>
+                </div>
+                <div class="container wrapper-left-account">
+                    <div class="row">
+                        <div class="col">
+                            <div class="account-prev">
+                                <img class="account-image" alt="avatar" src="./asset/image/avatar1.avif" />
+                                <h3 class="account-name text-h3">Minh Tri</h3>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="account-prev">
+                                <img class="account-image" alt="avatar" src="./asset/image/avata2.jpeg" />
+                                <h3 class="account-name text-h3">Trien dai hiep</h3>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="account-prev account-add">
+                                <div class="account-image center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="#1877f2"
+                                        class="icon-add bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                                        <path
+                                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z" />
+                                    </svg>
+                                </div>
+                                <div class="account-name text-h3 text-add">Thêm tài khoản</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col justify-content-end">
+                <div class="container">
+                    <div class="row flex-column wrapper-form">
+                        <div class="card">
+                            <form>
+                                <div class="mb-3 mt-3">
+                                    <input type="email" class="form-control" id="exampleInputEmail1"
+                                        aria-describedby="emailHelp" placeholder="Nhập email hoặc số điện thoại">
+                                </div>
+                                <div class="mb-3">
+                                    <input type="password" class="form-control" id="exampleInputPassword1"
+                                        placeholder="Mật khẩu">
+                                </div>
+                                <div class="d-grid"><button type="submit" class="btn btn-primary btn-lg">Đăng
+                                        Nhập</button></div>
+                                <div class="mb-3 text-center">
+                                    <button type="button" class="btn btn-link">Quên mật khẩu</button>
+                                </div>
+                                <hr>
+                                <div class="mb-3 text-center">
+                                    <button type="button" class="btn btn-success btn-lg btn-create"
+                                        data-bs-toggle="modal" data-bs-target="#exampleModalCenter">Tạo tài khoản
+                                        mới</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal resgister -->
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Đăng ký</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group row mb-3">
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control form-control-modal" placeholder="Họ">
+                            </div>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control form-control-modal" id="inputPassword4"
+                                    placeholder="Tên">
+                            </div>
+                        </div>
+                        <div class="form-group row mb-3">
+                            <div class="col">
+                                <input type="email" class="form-control form-control-modal" id="inputEmail3"
+                                    placeholder="Số di động hoặc email">
+                            </div>
+                        </div>
+                        <div class="form-group row mb-3">
+                            <div class="col">
+                                <input type="password" class="form-control form-control-modal" id="inputPassword3"
+                                    placeholder="Password">
+                            </div>
+                        </div>
+                        <div class="form-group row mb-3">
+                            <div class="col">
+                                <legend class="col-form-label col-12 pt-0" for="datepicker">ngày sinh:</legend>
+                                <div class="input-group date" id="datepicker">
+                                    <input type="text" class="form-control input-date" id="date" placeholder="chọn" />
+                                    <span class="input-group-append">
+                                        <span class="input-group-text bg-light d-block">
+                                            <i class="fa fa-calendar"></i>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <fieldset class="form-group mb-3">
+                            <div class="row">
+                                <legend class="col-form-label col-12 pt-0">Giới tính</legend>
+                                <div class="col-12">
+                                    <div class="form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios1"
+                                            value="option1" checked>
+                                        <label class="form-check-label" for="gridRadios1">
+                                            Name
+                                        </label>
+                                    </div>
+                                    <div class="form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2"
+                                            value="option2">
+                                        <label class="form-check-label" for="gridRadios2">
+                                            Nữ
+                                        </label>
+                                    </div>
+                                    <div class="form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios3"
+                                            value="option3">
+                                        <label class="form-check-label" for="gridRadios3">
+                                            Khác
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success btn-create">Đăng ký</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.js"
+        integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"
+        integrity="sha512-LsnSViqQyaXpD4mBBdRYeP6sRwJiJveh2ZIbW41EBrNmKxgr/LFZIiWT6yr+nycvhvauz8c2nYMhrP80YhG7Cw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
+        // $(function () {
+        //     $('#datepicker').datepicker()
+        // })
+        $('#datepicker').datepicker({
+            uiLibrary: 'bootstrap5'
+        });
+    </script>
+</body>
+
+</html>
