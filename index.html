@@ -19,16 +19,18 @@
 <body>
     <section style="background-color: #CDC4F9;" class="wrapper">
         <div class="container text-center">
-            <div class="row">
-                <div class="col-4 wrapper-left">
+            <div class="row" style="max-width: 1500px;">
+                <div class="col-lg-4 col-md-5 wrapper-left">
                     <div class="header">
                         <div class="wrapper-head">
                             <h1 class="title">Chat</h1>
                             <i class="fa-solid fa-pen-to-square fa-xl"></i>
                         </div>
                         <div class="search">
-                            <input type="text" placeholder="Tìm kiếm hội thoại">
-                            <i class="search-">icon search</i>
+                            <input type="text" class="input-search" placeholder="Tìm kiếm hội thoại">
+                            <span class="icon-search">
+                                <i class="fa-solid fa-magnifying-glass fa-lg" style="color: #cccccc;"></i>
+                            </span>
                         </div>
                     </div>
                     <div class="body">
@@ -37,7 +39,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avata2.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -51,7 +53,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar1.avif" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -65,7 +67,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar3.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -79,7 +81,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar4.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -93,7 +95,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar5.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -107,7 +109,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar8.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -121,7 +123,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar5.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -135,7 +137,7 @@
                                 <div class="col-md-3 custom-img">
                                     <img src="./asset/image/avatar7.jpeg" class="img-fluid" alt="...">
                                 </div>
-                                <div class="col-md-9">
+                                <div class="col-md-9 d-flex align-items-center">
                                     <div class="card-body">
                                         <h5 class="card-title">Card title</h5>
                                         <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
@@ -146,13 +148,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-8 wrapper-right">
+                <div class="col-md-7 col-lg-8 wrapper-right">
                     <div class="card mb-3 card-head">
                         <div class="row g-0">
                             <div class="col-6 custom-img custom-img-head">
                                 <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
                                     class="img-fluid" alt="...">
-                                <h5 class="card-title">David Tulanh</h5>
+                                <div class="card-head-custom">
+                                    <h5 class="card-title">David Tulanh</h5>
+                                    <p class="card-text"><small class="text-body-secondary">Last updated 3 mins
+                                            ago</small></p>
+                                </div>
                             </div>
                             <div class="col-6 action">
                                 <a class="ms-1 text-muted action-button" href="#!"><i class="fa-solid fa-phone fa-lg"

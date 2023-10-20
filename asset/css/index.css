@@ -13,7 +13,8 @@
 }
 
 .card {
-    padding: 20px;
+    /* padding: 20px; */
+    padding: 0 20px 20px 0
 }
 
 .wrapper-left {
@@ -29,11 +30,36 @@
     margin-right: 50px;
 }
 
+.search {
+    position: relative;
+}
+
+.input-search {
+    width: 70%;
+    height: 40px;
+    border-radius: 50px;
+    padding: 20px;
+    padding-left: 44px;
+    background-color: #F0F2F5;
+    border: none;
+}
+
+.icon-search {
+    position: absolute;
+    left: 70px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
 .body {
     overflow-y: auto;
     max-height: 66vh;
     padding-left: 50px;
     margin-top: 20px;
+}
+
+.body .card {
+    cursor: pointer;
 }
 
 .body .card {
@@ -52,6 +78,20 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+}
+
+.custom-img-head {
+    cursor: pointer;
+}
+
+.card-head-custom {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.card-head-custom .card-text {
+    margin-left: 10px;
 }
 
 .custom-img {
@@ -85,12 +125,14 @@
 
 .wrapper-right .card-head {
     width: 100%;
-    height: 114px;
+    height: 92px;
     border-radius: 0;
     margin-right: 20px;
     border-top: 0;
     border-left: 0;
     border-right: 0;
+    margin-bottom: 0 !important;
+    padding-bottom: 0;
 }
 
 .wrapper-chat {
@@ -113,4 +155,123 @@
 
 .action-button {
     width: 10%;
+}
+
+@media (min-width: 576px) {}
+
+
+@media (min-width: 768px) {
+    .search .input-search {
+        font-size: 0.875rem;
+    }
+
+    .icon-search {
+        left: 58px;
+    }
+
+    .body {
+        padding-left: 20px;
+    }
+
+    .card-body {
+        padding: 0;
+        padding-left: 10px;
+    }
+
+    .card-body .card-title {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .card-body .card-text {
+        text-align: start;
+        font-size: 0.875rem;
+    }
+
+    .custom-img .img-fluid {
+        width: 50px;
+        height: 50px;
+    }
+
+    .wrapper-right .wrapper-chat {
+        width: 430px;
+    }
+
+    .wrapper-right .card {
+        padding-right: 0;
+    }
+
+    .action .action-button {
+        margin-right: 14px;
+    }
+}
+
+
+@media (min-width: 992px) {
+    .header .wrapper-head {
+        margin-left: 30px;
+        margin-right: 30px;
+    }
+
+    .body {
+        padding-left: 30px;
+    }
+
+    .card-body {
+        flex: 1 1 auto;
+        padding: 16px 0 16px 10px;
+    }
+
+    .custom-img .img-fluid {
+        width: 64px;
+        height: 64px;
+    }
+
+    .card-body .card-title {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .card-body .card-text {
+        text-align: start;
+        font-size: 1rem;
+    }
+
+    .search .input-search {
+        width: 82%;
+    }
+
+    .search .icon-search {
+        left: 42px;
+    }
+
+    .wrapper-right .wrapper-chat {
+        width: 580px;
+    }
+}
+
+
+@media (min-width: 1200px) {
+    .wrapper-right .wrapper-chat {
+        width: unset;
+    }
+
+    .search .icon-search {
+        left: 46px;
+    }
+
+    .card-body {
+        flex: 1 1 auto;
+        padding: 16px 0 16px 0px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .search .icon-search {
+        left: 54px;
+    }
+
+    .wrapper-right .wrapper-chat {
+        width: 815px;
+    }
 }
