@@ -14,9 +14,8 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="./asset/css/index.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/web-socket-js/1.0.0/web_socket.min.js"
-        integrity="sha512-jtr9/t8rtBf1Sv832XjG1kAtUECQCqFnTAJWccL8CSC82VGzkPPih8rjtOfiiRKgqLXpLA1H/uQ/nq2bkHGWTQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
     <script src="./asset/js/script.js"></script>
 </head>
 
@@ -323,18 +322,56 @@
                                         13</p>
                                 </div>
                             </div>
+                            <div class="d-flex flex-row justify-content-end">
+                                <div>
+                                    <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">Ut enim
+                                        ad minim veniam,
+                                        quis
+                                        nostrud exercitation ullamco
+                                        consequat.</p>
+                                    <p class="small me-3 mb-3 rounded-3 text-muted">12:00 PM | Aug 13</p>
+                                </div>
+                            </div>
 
-                            <!-- chat -->
-                            <!-- <div
-                                class="text-muted d-flex justify-content-start align-items-center pe-3 pt-3 mt-2 wrap-send">
+                            <div class="d-flex flex-row justify-content-start">
                                 <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
-                                    alt="avatar 3" style="width: 40px; height: 100%;">
-                                <input type="text" class="form-control form-control-lg input-custom"
-                                    id="exampleFormControlInput2" placeholder="Type message">
-                                <a class="ms-1 text-muted" href="#!"><i class="fas fa-paperclip"></i></a>
-                                <a class="ms-3 text-muted" href="#!"><i class="fas fa-smile"></i></a>
-                                <a class="ms-3" href="#!"><i class="fas fa-paper-plane"></i></a>
-                            </div> -->
+                                    alt="avatar 1" class="avatar-chat">
+                                <div>
+                                    <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">Duis
+                                        aute
+                                        irure
+                                        dolor in reprehenderit in voluptate velit esse cillum dolore eu
+                                        fugiat nulla pariatur.
+                                    </p>
+                                    <p class="small ms-3 mb-3 rounded-3 text-muted float-end">12:00 PM | Aug
+                                        13</p>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-row justify-content-end">
+                                <div>
+                                    <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">Ut enim
+                                        ad minim veniam,
+                                        quis
+                                        nostrud exercitation ullamco
+                                        consequat.</p>
+                                    <p class="small me-3 mb-3 rounded-3 text-muted">12:00 PM | Aug 13</p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-row justify-content-start">
+                                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
+                                    alt="avatar 1" class="avatar-chat">
+                                <div>
+                                    <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">Duis
+                                        aute
+                                        irure
+                                        dolor in reprehenderit in voluptate velit esse cillum dolore eu
+                                        fugiat nulla pariatur.
+                                    </p>
+                                    <p class="small ms-3 mb-3 rounded-3 text-muted float-end">12:00 PM | Aug
+                                        13</p>
+                                </div>
+                            </div>
                         </div>
                         <div
                             class="text-muted d-flex justify-content-start align-items-center pe-5 pt-3 mt-2 wrap-send">

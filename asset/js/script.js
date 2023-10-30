@@ -1,37 +1,32 @@
-//socket
-// const userID = '001';
-// const cid = '2222';
-// const socket = new WebSocket(`http://192.168.1.19:4066/?userID=${userID}&cid=${cid}`);
-// const WS_URL = 'ws://192.168.1.19:4066'
-// const socket = new WebSocket(WS_URL)
+var socket = io.connect('https://node.surecommand.com/', {
+    query: {
+        user: JSON.stringify({
+            userID: '12121212',
+            cid: '2222',
+        })
+    },
+    // withCredentials: true,
+    autoConnect: true,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelayMax: 3000,
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+})
 
-// socket.addEventListener('open', (event) => {
-//     console.log('Event ', event)
-//     socket.send('Hello, server!')
-// })
+socket.on('connect', () => {
+    console.log("socket initialized successfully ✅")
+})
 
-// socket.addEventListener('message', (event) => {
-//     console.log('Mess Server', event.data)
-// })
-
-// socket.addEventListener('close', (event) => {
-//     if (event.wasClean) {
-//         console.log('err')
-//     } else {
-//         console.error('err')
-//     }
-// })
-
-// socket.addEventListener('error', (error) => {
-//     console.log('error', error)
-// })
-
-const exampleSocket = new WebSocket(
-    "wss://www.example.com/socketserver",
-    "protocolOne",
-)
-exampleSocket.onopen = (event) => {
-    exampleSocket.send("Here's some text that the server is urgently awaiting!");
+let info = {
+    "userID": "1138",
+    "cID": "3622",
+    "content": 'tri test',
+    "type": "text"
 }
+socket.emit("push2talk_send_msg", JSON.stringify(info));
 
-
+socket.emit('push2talk_load_msg', { start: 10000 }, (err, res) => {
+    console.log('res', res)
+})

@@ -216,7 +216,8 @@
     }
 
     .wrap-right-card .wrapper-chat {
-        max-height: (100vh - 98px - 10px);
+        /* max-height: (100vh - 98px - 10px); */
+        flex: 1;
         overflow-y: scroll;
     }
 }
