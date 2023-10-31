@@ -4,8 +4,7 @@ const messageInput = document.getElementById('message-input')
 //khai bao ID nguoi dung
 var currentUserID = 2073
 
-let initialLastMessageId = null
-let lastScrolledMessageId = null
+let lastMessageId = null
 let isScrolling = false
 
 var socket = io.connect('https://node.surecommand.com/', {
@@ -29,7 +28,7 @@ socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
-//check nếu có event new-mess thì chạy lại hàm getLastMessage để show mess ra UI
+//check new-mess & render
 socket.on('new_mess', (data) => {
     data && getLastMessage()
 })
@@ -40,54 +39,46 @@ function getLastMessage() {
         if (err) {
             console.log(err)
         } else {
-            initialLastMessageId = res.Messages.id
-            lastScrolledMessageId = res.Messages.id
+            lastMessageId = res.Messages.id
             getHistoryMessages(res.Messages.id)
             chatWrapper.addEventListener('scroll', () => {
-                if (chatWrapper.scrollTop === 0 && !isScrolling) {
-                    // Đánh dấu đang xử lý sự kiện scroll
-                    isScrolling = true;
-                    // Sử dụng giá trị của lần cuộn trước đó
-                    lastScrolledMessageId -= 10
-                    getHistoryMessages(lastScrolledMessageId)
+                if (chatWrapper.scrollTop === 0) {
+                    isScrolling = true
+                    lastMessageId = Math.max(0, lastMessageId - 10)
+                    getHistoryMessages(lastMessageId, isScrolling)
                 }
-            });
+            })
         }
     })
 }
 getLastMessage()
 
-// Hàm xử lý xong sự kiện scroll
-function handleScrollComplete() {
-    isScrolling = false
-}
-
-// Sự kiện cho biết sự kiện scroll đã xử lý xong
-chatWrapper.addEventListener('scroll', () => {
-    handleScrollComplete()
-})
-
 //get history mess
-function getHistoryMessages(id) {
+function getHistoryMessages(id, isScrolling) {
     socket.emit('push2talk_load_msg', { start: ++id }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             console.log('history mess: ', res)
-            //reverse array chat
-            const arrReverse = res.Messages.reverse()
             //add history in DOM
+            const arrReverse = res.Messages.reverse()
             arrReverse.forEach(message => {
                 //check userID === userID thì sử dụng isCurrentUser(true/false) để xác định người dùng
                 var isCurrentUser = message.userID === currentUserID
-                addMessageToChat(message.content, isCurrentUser)
+                if (isScrolling) {
+                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                    addMessageToChat(message.content, isCurrentUser, true)
+                } else {
+                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                    addMessageToChat(message.content, isCurrentUser, false)
+                }
             })
         }
     })
 }
 
 //add mess lên UI
-function addMessageToChat(content, isCurrentUser, avatarUrl, timestamp) {
+function addMessageToChat(content, isCurrentUser, isScrolling) {
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'))
@@ -116,8 +107,12 @@ function addMessageToChat(content, isCurrentUser, avatarUrl, timestamp) {
         messageTextDiv.appendChild(timestampP)
     }
 
-    chatWrapper.appendChild(messageDiv)
-    chatWrapper.scrollTop = chatWrapper.scrollHeight
+    if (isScrolling) {
+        chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+    } else {
+        chatWrapper.appendChild(messageDiv)
+        chatWrapper.scrollTop = chatWrapper.scrollHeight
+    }
 }
 
 //send mess
