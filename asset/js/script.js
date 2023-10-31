@@ -19,14 +19,17 @@ socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
-let info = {
-    "userID": "1138",
-    "cID": "3622",
-    "content": 'tri test',
-    "type": "text"
-}
-socket.emit("push2talk_send_msg", JSON.stringify(info));
-
-socket.emit('push2talk_load_msg', { start: 10000 }, (err, res) => {
-    console.log('res', res)
+// let info = {
+//     "userID": "1138",
+//     "cID": "3622",
+//     "content": 'tri test',
+//     "type": "text"
+// }
+// socket.emit("push2talk_send_msg", JSON.stringify(info))
+socket.emit('chat_history', { start: 10000 }, (err, res) => {
+    console.log('a', res)
 })
+
+// socket.emit('push2talk_load_msg', { start: 10000 }, (err, res) => {
+//     console.log('res', res)
+// })
