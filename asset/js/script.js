@@ -26,8 +26,10 @@ socket.on('connect', () => {
 //     "type": "text"
 // }
 // socket.emit("push2talk_send_msg", JSON.stringify(info))
-socket.emit('chat_history', { start: 10000 }, (err, res) => {
-    console.log('a', res)
+
+//lay last tin nhan
+socket.emit('push2talk_last_msg', {}, (err, res) => {
+    console.log('last msg', res)
 })
 
 // socket.emit('push2talk_load_msg', { start: 10000 }, (err, res) => {
