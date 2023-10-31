@@ -109,6 +109,7 @@ function addMessageToChat(content, isCurrentUser, isScrolling) {
 
     if (isScrolling) {
         chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        chatWrapper.scrollTop = chatWrapper.clientHeight
     } else {
         chatWrapper.appendChild(messageDiv)
         chatWrapper.scrollTop = chatWrapper.scrollHeight
