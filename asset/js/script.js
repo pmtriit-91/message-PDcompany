@@ -4,6 +4,10 @@ const messageInput = document.getElementById('message-input')
 //khai bao ID nguoi dung
 var currentUserID = 2073
 
+let initialLastMessageId = null
+let lastScrolledMessageId = null
+let isScrolling = false
+
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
@@ -36,21 +40,32 @@ function getLastMessage() {
         if (err) {
             console.log(err)
         } else {
+            initialLastMessageId = res.Messages.id
+            lastScrolledMessageId = res.Messages.id
             getHistoryMessages(res.Messages.id)
-            //event scroll show history
             chatWrapper.addEventListener('scroll', () => {
-                let lastID = res.Messages.id
-                console.log(lastID)
-                // if (chatWrapper.scrollTop === 0) {
-                //     for (lastID; lastID < 0; lastID - 9) {
-                //         getHistoryMessages(lastID)
-                //     }
-                // }
-            })
+                if (chatWrapper.scrollTop === 0 && !isScrolling) {
+                    // Đánh dấu đang xử lý sự kiện scroll
+                    isScrolling = true;
+                    // Sử dụng giá trị của lần cuộn trước đó
+                    lastScrolledMessageId -= 10
+                    getHistoryMessages(lastScrolledMessageId)
+                }
+            });
         }
     })
 }
 getLastMessage()
+
+// Hàm xử lý xong sự kiện scroll
+function handleScrollComplete() {
+    isScrolling = false
+}
+
+// Sự kiện cho biết sự kiện scroll đã xử lý xong
+chatWrapper.addEventListener('scroll', () => {
+    handleScrollComplete()
+})
 
 //get history mess
 function getHistoryMessages(id) {
