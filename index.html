@@ -14,11 +14,21 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
     <link rel="stylesheet" href="./asset/css/index.css">
+    <!-- axios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"
+        integrity="sha512-WrdC3CE9vf1nBf58JHepuWT4x24uTacky9fuzw2g/3L9JkihgwZ6Cfv+JGTtNyosOhEmttMtEZ6H3qJWfI7gIQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- moment -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
         integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- jquery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- socketIO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <!-- css tippy -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/material.css" />
 </head>
 
 <body>
@@ -226,14 +236,15 @@
                                     alt="avatar 1" class="avatar-chat">
                                 <div>
                                     <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">Duis
-                                        aute irure</p>
+                                        aute irure asdasd sad asdasd asdasda dasd</p>
                                     <p class="small ms-3 mb-3 rounded-3 text-muted float-end">12:00 PM | Aug
                                         13</p>
                                 </div>
                             </div>
                             <div class="d-flex flex-row justify-content-end">
                                 <div>
-                                    <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">Ut enim ad </p>
+                                    <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">Ut enim ad dasda dasd
+                                        asda sdsad asda sasd asdas dsadas dd asdas</p>
                                     <p class="small me-3 mb-3 rounded-3 text-muted">12:00 PM | Aug 13</p>
                                 </div>
                             </div> -->
@@ -243,9 +254,11 @@
                                 alt="avatar 1" class="avatar-chat">
                             <input id="message-input" type="text" class="form-control form-control-md input-custom"
                                 id="exampleFormControlInput2" placeholder="Type message">
-                            <a class="ms-1 text-muted" href="#!"><i class="fas fa-paperclip"></i></a>
+                            <a class="ms-1 text-muted" href="#!" id="open-image-upload"><i
+                                    class="fas fa-paperclip"></i></a>
                             <a class="ms-3 text-muted" href="#!"><i class="fas fa-smile"></i></a>
                             <a class="ms-3" href="#!" id="send-button"><i class="fas fa-paper-plane"></i></a>
+                            <input type="file" id="image-upload" style="display: none;">
                         </div>
                     </div>
                 </div>
@@ -264,6 +277,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"
         integrity="sha512-LsnSViqQyaXpD4mBBdRYeP6sRwJiJveh2ZIbW41EBrNmKxgr/LFZIiWT6yr+nycvhvauz8c2nYMhrP80YhG7Cw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <!-- tippy -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <!-- script -->
     <script src="./asset/js/script.js"></script>
 </body>
 
