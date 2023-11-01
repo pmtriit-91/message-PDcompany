@@ -67,10 +67,10 @@ function getHistoryMessages(id, isScrolling) {
                 var isCurrentUser = message.userID === currentUserID
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                    addMessageToChat(message.content, isCurrentUser, true)
+                    addMessageToChat(message.content, isCurrentUser, true, message)
                 } else {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                    addMessageToChat(message.content, isCurrentUser, false)
+                    addMessageToChat(message.content, isCurrentUser, false, message)
                 }
             })
         }
@@ -78,7 +78,8 @@ function getHistoryMessages(id, isScrolling) {
 }
 
 //add mess lên UI
-function addMessageToChat(content, isCurrentUser, isScrolling) {
+function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
+    console.log(messageData)
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'))
@@ -96,7 +97,8 @@ function addMessageToChat(content, isCurrentUser, isScrolling) {
     // create text time
     const timestampP = document.createElement('p')
     timestampP.classList.add('small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted', (isCurrentUser ? null : 'float-end'))
-    timestampP.textContent = '12:00 PM | Aug 13'
+    timestampP.textContent = `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM D')}`
+    //'12:00 PM | Aug 13'
 
     if (isCurrentUser) {
         messageDiv.appendChild(messageTextDiv)
