@@ -173,6 +173,19 @@
     object-fit: cover;
 }
 
+.wrapper-chat .wrap-user {
+    position: relative;
+    padding: 10px 0;
+}
+
+.wrap-user .user-name {
+    position: absolute;
+    font-size: 10px;
+    padding-top: 12px;
+    top: -16px;
+    color: #ccc;
+}
+
 /* screen */
 @media (min-width: 320px) {
     .body {

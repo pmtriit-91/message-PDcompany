@@ -38,9 +38,9 @@ socket.on('connect', () => {
 })
 
 //check new-mess & render
-socket.on('new_mess', (data) => {
-    data && getLastMessage()
-})
+// socket.on('new_mess', (data) => {
+//     data && getLastMessage()
+// })
 
 //upload image
 // openImageUploadButton.addEventListener("click", () => {
@@ -89,7 +89,7 @@ getLastMessage()
 
 //get history mess
 function getHistoryMessages(id, isScrolling) {
-    socket.emit('push2talk_load_msg', { start: ++id, numView: 30 }, (err, res) => {
+    socket.emit('push2talk_load_msg', { start: ++id, numView: 20 }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
@@ -138,15 +138,15 @@ function getHistoryMessages(id, isScrolling) {
 
 //add mess lên UI
 function addMessageToChat(content, isCurrentUser, isScrolling, messageData, duplicateUserIDAndIDmax) {
+    // console.log(messageData)
     // div wrapper
     const messageDiv = document.createElement('div')
-    messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'))
+    messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
 
-    //check render avatar
-    const duplicate = duplicateUserIDAndIDmax.find((item) => {
-        return item.userID === messageData.userID && item.id === messageData.id
-    })
-    console.log(duplicate ? duplicate.id : '')
+    //name user
+    const nameUser = document.createElement('p')
+    nameUser.classList.add('user-name')
+    nameUser.textContent = messageData && messageData.displayName ? messageData.displayName : ''
 
     // create div avatar
     const avatarImg = document.createElement('img')
@@ -154,13 +154,22 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData, dupl
     avatarImg.alt = 'Avatar'
     avatarImg.classList.add('avatar-chat')
 
-    if (duplicate && duplicate.id === messageData.id) {
-        avatarImg.src = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp'
-        avatarImg.alt = 'Avatar'
-        avatarImg.classList.add('avatar-chat')
-    } else {
-        avatarImg.style = 'visibility: hidden'
-    }
+    //check render avatar
+    // if (duplicateUserIDAndIDmax && Array.isArray(duplicateUserIDAndIDmax) && duplicateUserIDAndIDmax.length > 0) {
+    //     const duplicate = duplicateUserIDAndIDmax.find((item) => {
+    //         return item.userID === messageData.userID && item.id === messageData.id
+    //     })
+
+    //     if (duplicate && duplicate.id) {
+    //         avatarImg.src = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp'
+    //         avatarImg.alt = 'Avatar'
+    //         avatarImg.classList.add('avatar-chat')
+    //     } else {
+    //         avatarImg.style = 'visibility: hidden'
+    //     }
+    // } else {
+    //     avatarImg.style = 'visibility: hidden'
+    // }
 
     // create text content
     const messageTextDiv = document.createElement('div')
@@ -184,6 +193,7 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData, dupl
     // const times = document.createElement('p')
     // times.classList.add('center')
     // times.textContent = `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}`
+    messageDiv.appendChild(nameUser)
 
     if (isCurrentUser) {
         messageDiv.appendChild(messageTextDiv)
@@ -210,12 +220,15 @@ function sendMessage() {
     if (messageContent) {
         const info = {
             "userID": currentUserID,
-            "cID": "3622",
+            "cID": "36222",
             "content": messageContent,
             "type": "text",
+            "displayName": 'You'
         }
 
-        socket.emit("push2talk_send_msg", JSON.stringify(info))
+        socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
+            // res && getLastMessage()
+        })
 
         // Reset the input field
         messageInput.value = ''
