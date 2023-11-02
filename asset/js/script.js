@@ -6,8 +6,6 @@ const messageInput = document.getElementById('message-input')
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
 localStorage.setItem('userID', randomUser)
 
-console.log(randomUser)
-
 //state lastID và trạng thái event scrollTop
 let lastMessageId = null
 let isScrolling = false
@@ -15,12 +13,11 @@ let isScrolling = false
 // tin nhắn cuối cùng của 1 user bất kì
 let lastSender = null
 
-//upload image
-const imageUploadInput = document.getElementById("image-upload")
-const openImageUploadButton = document.getElementById("open-image-upload")
-
 //cid
 const cID = '3322'
+
+//id
+const loadedMessageIDs = []
 
 //body script
 var socket = io.connect('https://node.surecommand.com/', {
@@ -40,43 +37,21 @@ var socket = io.connect('https://node.surecommand.com/', {
     }
 })
 
-console.log('socket', socket)
-
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
-// check new- mess & render
+// check new-mess
+const displayedMessages = []
 socket.on('new_mess', (data) => {
-    data && getLastMessage()
+    if (!displayedMessages.includes(data.id)) {
+        var isCurrentUser = data.userID === randomUser
+        addMessageToChat(data.content, isCurrentUser, isScrolling, data)
+        displayedMessages.push(data.id)
+    }
 })
 
-//upload image
-// openImageUploadButton.addEventListener("click", () => {
-//     imageUploadInput.click()
-// })
-
-// imageUploadInput.addEventListener("change", (event) => {
-//     const selectedImage = event.target.files[0]
-//     console.log(selectedImage)
-
-//     if (selectedImage) {
-//         axios.post('http://node.surecommand.com/test_send_image', { selectedImage }, {
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             withCredentials: true,
-//         })
-//             .then(response => {
-//                 console.log(response)
-//             })
-//             .catch(error => {
-//                 console.log(console.error())
-//             })
-//     }
-// })
-
-//get last mess
+// get last mess
 function getLastMessage() {
     socket.emit('push2talk_last_msg', {}, (err, res) => {
         if (err) {
@@ -103,38 +78,13 @@ function getHistoryMessages(id, isScrolling) {
             console.log(err)
         } else {
             console.log('history mess: ', res.Messages)
-            const newHistoryArr = res.Messages
-            console.log('newHistoryArr', newHistoryArr)
 
             //add history in DOM
             const arrReverse = res.Messages.reverse()
+            const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
 
-            // const resultFilterDuplicateUserIDmax = []
-            // // Dùng một đối tượng để theo dõi id lớn nhất của từng userID
-            // const maxIdMap = {}
-
-            // arrReverse.forEach((item) => {
-            //     const userID = item.userID
-            //     const id = item.id
-
-            //     // Nếu userID chưa được thêm vào maxIdMap hoặc id lớn hơn id hiện tại
-            //     if (!maxIdMap[userID] || id > maxIdMap[userID]) {
-            //         maxIdMap[userID] = id
-            //     }
-            // })
-
-            // // Lặp qua mảng và thêm các phần tử có userID trùng và id là lớn nhất vào kết quả
-            // arrReverse.forEach((item) => {
-            //     const userID = item.userID
-            //     const id = item.id
-
-            //     if (id === maxIdMap[userID]) {
-            //         resultFilterDuplicateUserIDmax.push(item)
-            //     }
-            // })
-
-            arrReverse.forEach(message => {
-                //check userID === userID thì sử dụng isCurrentUser(true/false) để xác định người dùng
+            newMessages.forEach(message => {
+                loadedMessageIDs.push(message.id)
                 var isCurrentUser = message.userID === randomUser
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
@@ -143,12 +93,6 @@ function getHistoryMessages(id, isScrolling) {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
                     addMessageToChat(message.content, isCurrentUser, false, message)
                 }
-
-                // if (message.userID === randomID) {
-                //     addMessageToChat(message.content, true, true, message, resultFilterDuplicateUserIDmax)
-                // } else {
-                //     addMessageToChat(message.content, false, false, message, resultFilterDuplicateUserIDmax)
-                // }
             })
         }
     })
@@ -175,23 +119,6 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
     avatarImg.src = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp'
     avatarImg.alt = 'Avatar'
     avatarImg.classList.add('avatar-chat')
-
-    //check render avatar
-    // if (duplicateUserIDAndIDmax && Array.isArray(duplicateUserIDAndIDmax) && duplicateUserIDAndIDmax.length > 0) {
-    //     const duplicate = duplicateUserIDAndIDmax.find((item) => {
-    //         return item.userID === messageData.userID && item.id === messageData.id
-    //     })
-
-    //     if (duplicate && duplicate.id) {
-    //         avatarImg.src = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp'
-    //         avatarImg.alt = 'Avatar'
-    //         avatarImg.classList.add('avatar-chat')
-    //     } else {
-    //         avatarImg.style = 'visibility: hidden'
-    //     }
-    // } else {
-    //     avatarImg.style = 'visibility: hidden'
-    // }
 
     // create text content
     const messageTextDiv = document.createElement('div')
@@ -242,14 +169,10 @@ function sendMessage() {
             "type": "text",
             "displayName": 'tri'
         }
-
-        socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
-            res && addMessageToChat(messageContent, true)
-        })
+        socket.emit("push2talk_send_msg", JSON.stringify(info))
 
         // Reset the input field
         messageInput.value = ''
-
         // addMessageToChat(messageContent, true)
     }
 }
