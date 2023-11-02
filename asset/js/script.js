@@ -1,8 +1,12 @@
 const chatWrapper = document.querySelector('.wrapper-chat')
 const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
-//khai bao ID nguoi dung
-var currentUserID = 2073
+
+//fake userID
+const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
+localStorage.setItem('userID', randomUser)
+
+console.log(randomUser)
 
 //state lastID và trạng thái event scrollTop
 let lastMessageId = null
@@ -19,7 +23,7 @@ const openImageUploadButton = document.getElementById("open-image-upload")
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
-            userID: '12121212',
+            userID: randomUser,
             cid: '2222',
         })
     },
@@ -33,14 +37,16 @@ var socket = io.connect('https://node.surecommand.com/', {
     }
 })
 
+console.log('socket', socket)
+
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
-//check new-mess & render
-// socket.on('new_mess', (data) => {
-//     data && getLastMessage()
-// })
+// check new- mess & render
+socket.on('new_mess', (data) => {
+    data && getLastMessage()
+})
 
 //upload image
 // openImageUploadButton.addEventListener("click", () => {
@@ -94,51 +100,57 @@ function getHistoryMessages(id, isScrolling) {
             console.log(err)
         } else {
             console.log('history mess: ', res)
+
             //add history in DOM
             const arrReverse = res.Messages.reverse()
 
-            const resultFilterDuplicateUserIDmax = []
-            // Dùng một đối tượng để theo dõi id lớn nhất của từng userID
-            const maxIdMap = {}
+            // const resultFilterDuplicateUserIDmax = []
+            // // Dùng một đối tượng để theo dõi id lớn nhất của từng userID
+            // const maxIdMap = {}
 
-            arrReverse.forEach((item) => {
-                const userID = item.userID
-                const id = item.id
+            // arrReverse.forEach((item) => {
+            //     const userID = item.userID
+            //     const id = item.id
 
-                // Nếu userID chưa được thêm vào maxIdMap hoặc id lớn hơn id hiện tại
-                if (!maxIdMap[userID] || id > maxIdMap[userID]) {
-                    maxIdMap[userID] = id
-                }
-            })
+            //     // Nếu userID chưa được thêm vào maxIdMap hoặc id lớn hơn id hiện tại
+            //     if (!maxIdMap[userID] || id > maxIdMap[userID]) {
+            //         maxIdMap[userID] = id
+            //     }
+            // })
 
-            // Lặp qua mảng và thêm các phần tử có userID trùng và id là lớn nhất vào kết quả
-            arrReverse.forEach((item) => {
-                const userID = item.userID
-                const id = item.id
+            // // Lặp qua mảng và thêm các phần tử có userID trùng và id là lớn nhất vào kết quả
+            // arrReverse.forEach((item) => {
+            //     const userID = item.userID
+            //     const id = item.id
 
-                if (id === maxIdMap[userID]) {
-                    resultFilterDuplicateUserIDmax.push(item)
-                }
-            })
+            //     if (id === maxIdMap[userID]) {
+            //         resultFilterDuplicateUserIDmax.push(item)
+            //     }
+            // })
 
             arrReverse.forEach(message => {
                 //check userID === userID thì sử dụng isCurrentUser(true/false) để xác định người dùng
-                var isCurrentUser = message.userID === currentUserID
+                var isCurrentUser = message.userID === randomUser
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                    addMessageToChat(message.content, isCurrentUser, true, message, resultFilterDuplicateUserIDmax)
+                    addMessageToChat(message.content, isCurrentUser, true, message)
                 } else {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                    addMessageToChat(message.content, isCurrentUser, false, message, resultFilterDuplicateUserIDmax)
+                    addMessageToChat(message.content, isCurrentUser, false, message)
                 }
+
+                // if (message.userID === randomID) {
+                //     addMessageToChat(message.content, true, true, message, resultFilterDuplicateUserIDmax)
+                // } else {
+                //     addMessageToChat(message.content, false, false, message, resultFilterDuplicateUserIDmax)
+                // }
             })
         }
     })
 }
 
 //add mess lên UI
-function addMessageToChat(content, isCurrentUser, isScrolling, messageData, duplicateUserIDAndIDmax) {
-    // console.log(messageData)
+function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
@@ -146,7 +158,12 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData, dupl
     //name user
     const nameUser = document.createElement('p')
     nameUser.classList.add('user-name')
-    nameUser.textContent = messageData && messageData.displayName ? messageData.displayName : ''
+
+    if (isCurrentUser) {
+        nameUser.textContent = 'you'
+    } else {
+        nameUser.textContent = messageData && messageData.displayName ? messageData.displayName : ''
+    }
 
     // create div avatar
     const avatarImg = document.createElement('img')
@@ -219,11 +236,11 @@ function sendMessage() {
 
     if (messageContent) {
         const info = {
-            "userID": currentUserID,
+            "userID": randomUser,
             "cID": "36222",
             "content": messageContent,
             "type": "text",
-            "displayName": 'You'
+            "displayName": 'tri'
         }
 
         socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
@@ -245,14 +262,3 @@ messageInput.addEventListener('keypress', (event) => {
         sendMessage()
     }
 })
-
-//update image
-function uploadImage() {
-
-}
-
-const arr = [
-    { userID: 1, name: 'hihi', id: '5', content: 'asd' },
-    { userID: 2, name: 'huhu', id: '8', content: 'xxx' },
-    { userID: 3, name: 'kufa', id: '9', content: 'xcasd' }
-]
