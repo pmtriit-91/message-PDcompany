@@ -67,6 +67,7 @@
     overflow-y: auto;
     padding-left: 50px;
     padding-top: 16px;
+    border-right: 1px solid #ccc;
 }
 
 .body .card {

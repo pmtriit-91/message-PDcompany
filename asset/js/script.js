@@ -19,12 +19,15 @@ let lastSender = null
 const imageUploadInput = document.getElementById("image-upload")
 const openImageUploadButton = document.getElementById("open-image-upload")
 
+//cid
+const cID = '3322'
+
 //body script
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
             userID: randomUser,
-            cid: '2222',
+            cid: cID,
         })
     },
     // withCredentials: true,
@@ -99,7 +102,9 @@ function getHistoryMessages(id, isScrolling) {
         if (err) {
             console.log(err)
         } else {
-            console.log('history mess: ', res)
+            console.log('history mess: ', res.Messages)
+            const newHistoryArr = res.Messages
+            console.log('newHistoryArr', newHistoryArr)
 
             //add history in DOM
             const arrReverse = res.Messages.reverse()
@@ -205,11 +210,6 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
         animation: 'scale',
         trigger: 'click'
     })
-
-    //create text time center (nếu sau 10p ko có new-mess thì show thẻ này ra)
-    // const times = document.createElement('p')
-    // times.classList.add('center')
-    // times.textContent = `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}`
     messageDiv.appendChild(nameUser)
 
     if (isCurrentUser) {
@@ -244,13 +244,13 @@ function sendMessage() {
         }
 
         socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
-            // res && getLastMessage()
+            res && addMessageToChat(messageContent, true)
         })
 
         // Reset the input field
         messageInput.value = ''
 
-        addMessageToChat(messageContent, true)
+        // addMessageToChat(messageContent, true)
     }
 }
 
