@@ -46,9 +46,12 @@ const displayedMessages = []
 socket.on('new_mess', (data) => {
     if (!displayedMessages.includes(data.id)) {
         var isCurrentUser = data.userID === randomUser
-        addMessageToChat(data.content, isCurrentUser, isScrolling, data)
+        addMessageToChat(data.content, isCurrentUser, false, data)
         displayedMessages.push(data.id)
+    } else {
+        getHistoryMessages()
     }
+    // data && getHistoryMessages()
 })
 
 // get last mess
@@ -169,7 +172,13 @@ function sendMessage() {
             "type": "text",
             "displayName": 'tri'
         }
-        socket.emit("push2talk_send_msg", JSON.stringify(info))
+        socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
+            if (err) {
+                console.log(err)
+            } else {
+                displayedMessages.push(res.id)
+            }
+        })
 
         // Reset the input field
         messageInput.value = ''
