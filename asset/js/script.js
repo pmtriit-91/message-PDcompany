@@ -196,3 +196,19 @@ messageInput.addEventListener('keypress', (event) => {
         sendMessage()
     }
 })
+
+
+// /emoji
+const wrapEmoji = document.getElementById('wrap-emoji')
+const emoji = document.getElementById('emoji')
+const iconEmoji = document.getElementsByClassName('icon-emoji')
+
+wrapEmoji.addEventListener('click', () => {
+    emoji.style.display = emoji.style.display === 'none' ? 'block' : 'none';
+})
+
+emoji.addEventListener('emoji-click', event => {
+    console.log(event.detail)
+    const emojiUnicode = event.detail.emoji.unicode
+    messageInput.value += emojiUnicode
+})

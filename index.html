@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Message</title>
+    <!-- font awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
         integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -29,6 +30,10 @@
     <!-- css tippy -->
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css" />
     <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/material.css" />
+    <!-- emoji-element-picker -->
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/database.js">
+    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/picker.js">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 </head>
 
 <body>
@@ -93,37 +98,15 @@
                                                 ago</small></p>
                                     </div>
                                 </div>
-                                <!-- <div class="col-md-4 col-lg-6 action">
-                                    <a class="ms-2 text-muted action-button" href="#!"><i
-                                            class="fa-solid fa-phone fa-lg" style="color: #9D44C0;"></i></a>
-                                    <a class="ms-2 text-muted action-button" href="#!"><i
-                                            class="fa-solid fa-video fa-lg" style="color: #9D44C0;"></i></a>
-                                </div> -->
                                 <div class="col-md-4 col-lg-6 action">
-                                    <a class="ms-2 text-muted action-button" href="#!">Log out</a>
+                                    <a class="ms-2 text-muted action-button" href="#!">
+                                        <i class="fa-solid fa-right-from-bracket fa-lg"></i>
+                                    </a>
                                 </div>
                             </div>
                         </div>
                         <!-- <hr class="line"> -->
-                        <div class="wrapper-chat">
-                            <!-- <div class="d-flex flex-row justify-content-start">
-                                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
-                                    alt="avatar 1" class="avatar-chat">
-                                <div>
-                                    <p class="small p-2 ms-3 mb-1 rounded-3" style="background-color: #f5f6f7;">Duis
-                                        aute irure asdasd sad asdasd asdasda dasd</p>
-                                    <p class="small ms-3 mb-3 rounded-3 text-muted float-end">12:00 PM | Aug
-                                        13</p>
-                                </div>
-                            </div>
-                            <div class="d-flex flex-row justify-content-end">
-                                <div>
-                                    <p class="small p-2 me-3 mb-1 text-white rounded-3 bg-primary">Ut enim ad dasda dasd
-                                        asda sdsad asda sasd asdas dsadas dd asdas</p>
-                                    <p class="small me-3 mb-3 rounded-3 text-muted">12:00 PM | Aug 13</p>
-                                </div>
-                            </div> -->
-                        </div>
+                        <div class="wrapper-chat"></div>
                         <div class="text-muted d-flex justify-content-start align-items-center pe-5 mt-2 wrap-send">
                             <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava1-bg.webp"
                                 alt="avatar 1" class="avatar-chat">
@@ -131,10 +114,14 @@
                                 id="exampleFormControlInput2" placeholder="Type message">
                             <a class="ms-1 text-muted" href="#!" id="open-image-upload"><i
                                     class="fas fa-paperclip"></i></a>
-                            <a class="ms-3 text-muted" href="#!"><i class="fas fa-smile"></i></a>
+                            <a class="ms-3 text-muted" href="#!" id="wrap-emoji">
+                                <i class="fas fa-smile icon-emoji">
+                                </i>
+                            </a>
                             <a class="ms-3" href="#!" id="send-button"><i class="fas fa-paper-plane"></i></a>
                             <input type="file" id="image-upload" style="display: none;">
                         </div>
+                        <emoji-picker id="emoji" class="light"></emoji-picker>
                     </div>
                 </div>
             </div>
