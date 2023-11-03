@@ -130,26 +130,28 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
     // create text time
     const timestampP = document.createElement('p')
     timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
-    const tooltipTime = timestampP.textContent = messageData && messageData.createdAt ?
+
+
+    const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
         `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
+
+    messageTextDiv.firstElementChild.setAttribute('data-template', `${tooltipTime}`)
 
     //tippy time
     tippy('#tooltip-time', {
-        content: tooltipTime,
+        content(reference) {
+            return reference.getAttribute('data-template')
+        },
         theme: 'material',
         animation: 'scale',
         trigger: 'click'
     })
-    messageDiv.appendChild(nameUser)
 
-    if (isCurrentUser) {
-        messageDiv.appendChild(messageTextDiv)
-        messageTextDiv.appendChild(timestampP)
-    } else {
-        messageDiv.appendChild(avatarImg)
-        messageDiv.appendChild(messageTextDiv)
-        messageTextDiv.appendChild(timestampP)
-    }
+    //add DOM
+    messageDiv.appendChild(nameUser)
+    messageTextDiv.appendChild(timestampP)
+    !isCurrentUser && messageDiv.appendChild(avatarImg)
+    messageDiv.appendChild(messageTextDiv)
 
     if (isScrolling) {
         chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
