@@ -87,9 +87,23 @@ const getListFriends = () => {
                 .then(response => {
                     listFriends = [...response.data.members]
                     console.log(listFriends)
-                    listFriends.map((friend) => {
-
+                    var htmls = listFriends.map((friend) => {
+                        console.log(friend)
+                        return `<div class="row row-card-avatar g-0">
+                        <div class="col-3 col-md-3 custom-img">
+                            <img src="./asset/image/avatar5.jpeg" class="img-fluid avatar-group" alt="...">
+                        </div>
+                        <div class="col-9 col-md-9 d-flex align-items-center">
+                            <div class="card-body">
+                                <h5 id="nameFriend" class="card-title">${friend.f_name}</h5>
+                                <p class="card-text"><small class="text-body-secondary">Last updated 27 mins
+                                        ago</small></p>
+                            </div>
+                        </div>
+                    </div>`
                     })
+                    var html = htmls.join('')
+                    document.getElementById('wrap-friend').innerHTML = html
                 })
                 .catch(error => {
                     console.log(error)
