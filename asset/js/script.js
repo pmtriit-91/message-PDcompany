@@ -1,8 +1,16 @@
 import { randomAvatarURL, randomName } from './randomName.js'
+import getListFriends from './listFriend.js'
 
+const bodyLeft = document.querySelector('#body-left')
 const chatWrapper = document.querySelector('.wrapper-chat')
 const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
+const buttonLogout = document.getElementsByClassName('button-logout')
+const emoji = document.getElementById('emoji')
+
+//token
+const token = JSON.parse(localStorage.getItem('token'))
+const dataUser = JSON.parse(localStorage.getItem('dataUser'))
 
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
@@ -21,103 +29,127 @@ const cID = '3322'
 //id
 const loadedMessageIDs = []
 
-//status emoji
-let isEmoji = false
-
 // baseUrl
 const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
 
-//data list friends
-let listFriends = []
-const bodyLeft = document.querySelector('#body-left')
-
 //body script
 //login
-const login = () => {
-    return new Promise((resolve, reject) => {
-        axios.post(baseUrl, {
-            "head": {
-                "code": 1, //code 1: login
-                "cID": 3322,
-                "version": 2
-            },
-            "body": {
-                "email": "tdinhphuoc@gmail.com",
-                "pass": "12345678"
-            }
-        }, {
-            headers: {
-                "Content-Type": "application/json",
-            },
-            withCredentials: true,
-        })
-            .then(response => {
-                localStorage.setItem('token', JSON.stringify(response.data.chatToken))
-                localStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
-                resolve(response)
-            })
-            .catch(error => {
-                console.log(error)
-                reject(error)
-            })
+// const login = () => {
+//     return new Promise((resolve, reject) => {
+//         axios.post(baseUrl, {
+//             "head": {
+//                 "code": 1, //code 1: login
+//                 "cID": 3322,
+//                 "version": 2
+//             },
+//             "body": {
+//                 "email": "tdinhphuoc@gmail.com",
+//                 "pass": "12345678"
+//             }
+//         }, {
+//             headers: {
+//                 "Content-Type": "application/json",
+//             },
+//             withCredentials: true,
+//         })
+//             .then(response => {
+//                 localStorage.setItem('token', JSON.stringify(response.data.chatToken))
+//                 localStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
+//                 resolve(response)
+//             })
+//             .catch(error => {
+//                 console.log(error)
+//                 reject(error)
+//             })
+//     })
+// }
+
+// // get list friends
+// const getListFriends = () => {
+//     Promise.all([login()])
+//         .then(() => {
+//             const dataUser = JSON.parse(localStorage.getItem('dataUser'))
+//             const token = JSON.parse(localStorage.getItem('token'))
+
+//             axios.post(baseUrl, {
+//                 "head": {
+//                     "code": 145, //code 145: list friend
+//                     "userID": dataUser.userID,
+//                     "token": token,
+//                     "cID": dataUser.cID,
+//                     "version": 2
+//                 },
+//                 "body": {}
+//             }, {
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                 }
+//             })
+//                 .then(response => {
+//                     listFriends = [...response.data.members]
+//                     console.log(listFriends)
+//                     var htmls = listFriends.map((friend) => {
+//                         console.log(friend)
+//                         return `<div class="row row-card-avatar g-0">
+//                         <div class="col-3 col-md-3 custom-img">
+//                             <img src="./asset/image/avatar5.jpeg" class="img-fluid avatar-group" alt="...">
+//                         </div>
+//                         <div class="col-9 col-md-9 d-flex align-items-center">
+//                             <div class="card-body">
+//                                 <h5 id="nameFriend" class="card-title">${friend.f_name}</h5>
+//                                 <p class="card-text"><small class="text-body-secondary">last messages</small></p>
+//                             </div>
+//                         </div>
+//                     </div>`
+//                     })
+//                     var html = htmls.join('')
+//                     document.getElementById('wrap-friend').innerHTML = html
+//                 })
+//                 .catch(error => {
+//                     console.log(error)
+//                 })
+//         })
+//         .catch(error => {
+//             console.log(error)
+//         })
+// }
+// getListFriends()
+
+// //render friend UI
+// const friendsUI = (id, name) => {
+// }
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!token) {
+        window.location = '/login.html'
+    }
+    buttonLogout[0].addEventListener('click', () => {
+        localStorage.removeItem('token')
+        window.location = '/login.html'
     })
-}
+})
 
 // get list friends
-const getListFriends = () => {
-    Promise.all([login()])
-        .then(() => {
-            const dataUser = JSON.parse(localStorage.getItem('dataUser'))
-            const token = JSON.parse(localStorage.getItem('token'))
+const handleClickCardFriend = (friendData) => {
+    console.log('data friend', friendData)
 
-            axios.post(baseUrl, {
-                "head": {
-                    "code": 145, //code 145: list friend
-                    "userID": dataUser.userID,
-                    "token": token,
-                    "cID": dataUser.cID,
-                    "version": 2
-                },
-                "body": {}
-            }, {
-                headers: {
-                    "Content-Type": "application/json",
-                }
-            })
-                .then(response => {
-                    listFriends = [...response.data.members]
-                    console.log(listFriends)
-                    var htmls = listFriends.map((friend) => {
-                        console.log(friend)
-                        return `<div class="row row-card-avatar g-0">
-                        <div class="col-3 col-md-3 custom-img">
-                            <img src="./asset/image/avatar5.jpeg" class="img-fluid avatar-group" alt="...">
-                        </div>
-                        <div class="col-9 col-md-9 d-flex align-items-center">
-                            <div class="card-body">
-                                <h5 id="nameFriend" class="card-title">${friend.f_name}</h5>
-                                <p class="card-text"><small class="text-body-secondary">Last updated 27 mins
-                                        ago</small></p>
-                            </div>
-                        </div>
-                    </div>`
-                    })
-                    var html = htmls.join('')
-                    document.getElementById('wrap-friend').innerHTML = html
-                })
-                .catch(error => {
-                    console.log(error)
-                })
-        })
-        .catch(error => {
-            console.log(error)
-        })
-}
-getListFriends()
+    //load last mess 1-1
+    socket.emit('load_last_mess', {
+        senderid: friendData.id, //friend id
+        receiverid: friendData.connectionid //userId
+    }, (err, data) => {
+        console.log('lastMessPrivate', data)
+    })
 
-//render friend UI
-const friendsUI = (id, name) => {
+    //history mess 1-1
+    socket.emit('chat_history', {
+        senderid: friendData.id, //friend id
+        receiverid: friendData.connectionid //userId
+    }, (err, data) => {
+        console.log('historyPrivate', data)
+    })
 }
+getListFriends(token, dataUser, baseUrl, handleClickCardFriend)
 
 //event socket
 var socket = io.connect('https://node.surecommand.com/', {
@@ -296,40 +328,3 @@ messageInput.addEventListener('keypress', (event) => {
         sendMessage()
     }
 })
-
-
-// /emoji
-const wrapEmoji = document.getElementById('wrap-emoji')
-const iconEmoji = document.getElementsByClassName('icon-emoji')
-const emoji = document.getElementById('emoji')
-
-wrapEmoji.addEventListener('click', () => {
-    if (!isEmoji) {
-        emoji.style.display = 'block'
-        isEmoji = true
-    } else {
-        emoji.style.display = 'none'
-        isEmoji = false
-    }
-})
-
-emoji.addEventListener('emoji-click', event => {
-    console.log(event.detail)
-    const emojiUnicode = event.detail.emoji.unicode
-    messageInput.value += emojiUnicode
-})
-
-// event outside emoji picker
-document.addEventListener('click', event => {
-    const isClickInsideEmoji = emoji.contains(event.target)
-    const isClickInsideWrapEmoji = wrapEmoji.contains(event.target)
-
-    if (!isClickInsideEmoji && !isClickInsideWrapEmoji) {
-        emoji.style.display = 'none'
-        isEmoji = false
-    }
-})
-
-
-let vh = window.innerHeight * 0.01;
-console.log(vh)

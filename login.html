@@ -71,17 +71,20 @@
                 <div class="container">
                     <div class="row flex-column wrapper-form">
                         <div class="card">
-                            <form>
+                            <form id="loginForm">
                                 <div class="mb-3 mt-3">
-                                    <input type="email" class="form-control" id="exampleInputEmail1"
+                                    <input type="email" class="form-control" id="exampleInputEmail"
                                         aria-describedby="emailHelp" placeholder="Nhập email hoặc số điện thoại">
                                 </div>
                                 <div class="mb-3">
-                                    <input type="password" class="form-control" id="exampleInputPassword1"
+                                    <input type="password" class="form-control" id="exampleInputPassword"
                                         placeholder="Mật khẩu">
                                 </div>
-                                <div class="d-grid"><button type="submit" class="btn btn-primary btn-lg">Đăng
-                                        Nhập</button></div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        Đăng Nhập
+                                    </button>
+                                </div>
                                 <div class="mb-3 text-center">
                                     <button type="button" class="btn btn-link">Quên mật khẩu</button>
                                 </div>
@@ -200,7 +203,8 @@
             uiLibrary: 'bootstrap5'
         })
     </script>
-    <script src="./asset/js/login.js"></script>
+    <script type="module" src="./asset/js/login.js"></script>
+
 </body>
 
 </html>
