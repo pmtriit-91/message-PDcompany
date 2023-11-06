@@ -1,13 +1,9 @@
-/* emoji-picker {
-    --emoji-font-family: MyCustomFont;
-} */
+* {
+    box-sizing: border-box;
+}
 
 .wrapper {
     height: 100%;
-}
-
-.container {
-    background: white;
 }
 
 .row.row-container {
@@ -19,7 +15,7 @@
 }
 
 .wrapper-left .header {
-    padding-top: 20px;
+    padding-top: 10px;
 }
 
 .wrapper-left .body {
@@ -140,7 +136,7 @@
 .wrap-right-card {
     width: 100%;
     height: 100vh;
-    padding: 20px 0;
+    padding: 10px 0;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -249,12 +245,6 @@
 
     .wrapper-right .card {
         padding-right: 0;
-    }
-
-    .wrap-right-card .wrapper-chat {
-        /* max-height: (100vh - 98px - 10px); */
-        flex: 1;
-        overflow-y: scroll;
     }
 }
 

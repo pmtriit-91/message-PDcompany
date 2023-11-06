@@ -1,3 +1,5 @@
+import { randomAvatarURL, randomName } from './randomName.js'
+
 const chatWrapper = document.querySelector('.wrapper-chat')
 const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
@@ -18,6 +20,12 @@ const cID = '3322'
 
 //id
 const loadedMessageIDs = []
+
+//status emoji
+let isEmoji = false
+
+//
+var currentAvatar
 
 //body script
 var socket = io.connect('https://node.surecommand.com/', {
@@ -41,17 +49,18 @@ socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
+const avatar = JSON.parse(socket.io.opts.query.user).avatar
+
 // check new-mess
 const displayedMessages = []
 socket.on('new_mess', (data) => {
     if (!displayedMessages.includes(data.id)) {
         var isCurrentUser = data.userID === randomUser
-        addMessageToChat(data.content, isCurrentUser, false, data)
+        addMessageToChat(data.content, isCurrentUser, false, data, currentAvatar)
         displayedMessages.push(data.id)
     } else {
         getHistoryMessages()
     }
-    // data && getHistoryMessages()
 })
 
 // get last mess
@@ -76,7 +85,7 @@ getLastMessage()
 
 //get history mess
 function getHistoryMessages(id, isScrolling) {
-    socket.emit('push2talk_load_msg', { start: ++id, numView: 20 }, (err, res) => {
+    socket.emit('push2talk_load_msg', { start: ++id, numView: 40 }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
@@ -119,8 +128,8 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
 
     // create div avatar
     const avatarImg = document.createElement('img')
-    avatarImg.src = 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp'
-    avatarImg.alt = 'Avatar'
+    avatarImg.src = randomAvatarURL
+    avatarImg.alt = 'avatar'
     avatarImg.classList.add('avatar-chat')
 
     // create text content
@@ -172,7 +181,7 @@ function sendMessage() {
             "cID": "36222",
             "content": messageContent,
             "type": "text",
-            "displayName": 'tri'
+            "displayName": randomName,
         }
         socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
             if (err) {
@@ -184,7 +193,8 @@ function sendMessage() {
 
         // Reset the input field
         messageInput.value = ''
-        // addMessageToChat(messageContent, true)
+
+        emoji.style.display = 'none'
     }
 }
 
@@ -200,15 +210,32 @@ messageInput.addEventListener('keypress', (event) => {
 
 // /emoji
 const wrapEmoji = document.getElementById('wrap-emoji')
-const emoji = document.getElementById('emoji')
 const iconEmoji = document.getElementsByClassName('icon-emoji')
+const emoji = document.getElementById('emoji')
 
 wrapEmoji.addEventListener('click', () => {
-    emoji.style.display = emoji.style.display === 'none' ? 'block' : 'none';
+    if (!isEmoji) {
+        emoji.style.display = 'block'
+        isEmoji = true
+    } else {
+        emoji.style.display = 'none'
+        isEmoji = false
+    }
 })
 
 emoji.addEventListener('emoji-click', event => {
     console.log(event.detail)
     const emojiUnicode = event.detail.emoji.unicode
     messageInput.value += emojiUnicode
+})
+
+// event outside emoji picker
+document.addEventListener('click', event => {
+    const isClickInsideEmoji = emoji.contains(event.target)
+    const isClickInsideWrapEmoji = wrapEmoji.contains(event.target)
+
+    if (!isClickInsideEmoji && !isClickInsideWrapEmoji) {
+        emoji.style.display = 'none'
+        isEmoji = false
+    }
 })
