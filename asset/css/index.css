@@ -243,6 +243,12 @@
         justify-content: flex-start;
     }
 
+    .wrap-right-card .wrapper-chat {
+        flex: 1;
+        overflow-y: scroll;
+        padding-top: 20px;
+    }
+
     .wrapper-right .card {
         padding-right: 0;
     }

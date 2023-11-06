@@ -24,10 +24,88 @@ const loadedMessageIDs = []
 //status emoji
 let isEmoji = false
 
-//
-var currentAvatar
+// baseUrl
+const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
+
+//data list friends
+let listFriends = []
+const bodyLeft = document.querySelector('#body-left')
 
 //body script
+//login
+const login = () => {
+    return new Promise((resolve, reject) => {
+        axios.post(baseUrl, {
+            "head": {
+                "code": 1, //code 1: login
+                "cID": 3322,
+                "version": 2
+            },
+            "body": {
+                "email": "tdinhphuoc@gmail.com",
+                "pass": "12345678"
+            }
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+            },
+            withCredentials: true,
+        })
+            .then(response => {
+                localStorage.setItem('token', JSON.stringify(response.data.chatToken))
+                localStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
+                resolve(response)
+            })
+            .catch(error => {
+                console.log(error)
+                reject(error)
+            })
+    })
+}
+
+// get list friends
+const getListFriends = () => {
+    Promise.all([login()])
+        .then(() => {
+            const dataUser = JSON.parse(localStorage.getItem('dataUser'))
+            const token = JSON.parse(localStorage.getItem('token'))
+
+            axios.post(baseUrl, {
+                "head": {
+                    "code": 145, //code 145: list friend
+                    "userID": dataUser.userID,
+                    "token": token,
+                    "cID": dataUser.cID,
+                    "version": 2
+                },
+                "body": {}
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            })
+                .then(response => {
+                    listFriends = [...response.data.members]
+                    console.log(listFriends)
+                    listFriends.map((friend) => {
+
+                    })
+                })
+                .catch(error => {
+                    console.log(error)
+                })
+        })
+        .catch(error => {
+            console.log(error)
+        })
+}
+getListFriends()
+
+//render friend UI
+const friendsUI = (id, name) => {
+}
+
+//event socket
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
@@ -49,14 +127,12 @@ socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
-const avatar = JSON.parse(socket.io.opts.query.user).avatar
-
 // check new-mess
 const displayedMessages = []
 socket.on('new_mess', (data) => {
     if (!displayedMessages.includes(data.id)) {
         var isCurrentUser = data.userID === randomUser
-        addMessageToChat(data.content, isCurrentUser, false, data, currentAvatar)
+        addMessageToChat(data.content, isCurrentUser, false, data)
         displayedMessages.push(data.id)
     } else {
         getHistoryMessages()
@@ -239,3 +315,7 @@ document.addEventListener('click', event => {
         isEmoji = false
     }
 })
+
+
+let vh = window.innerHeight * 0.01;
+console.log(vh)
