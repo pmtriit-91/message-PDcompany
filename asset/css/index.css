@@ -126,6 +126,10 @@
     object-fit: cover;
 }
 
+.card-text-sub {
+    margin-bottom: 0 !important;
+}
+
 .wrapper-right {
     position: relative;
     display: flex;

@@ -3,6 +3,9 @@ import getListFriends from './listFriend.js'
 
 const bodyLeft = document.querySelector('#body-left')
 const chatWrapper = document.querySelector('.wrapper-chat')
+const divWrapper = document.getElementById('wrapper-chat')
+const groupSurecommand = document.getElementById('card-surecommand')
+
 const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
 const buttonLogout = document.getElementsByClassName('button-logout')
@@ -20,9 +23,6 @@ localStorage.setItem('userID', randomUser)
 let lastMessageId = null
 let isScrolling = false
 
-// tin nhắn cuối cùng của 1 user bất kì
-let lastSender = null
-
 //cid
 const cID = '3322'
 
@@ -31,93 +31,6 @@ const loadedMessageIDs = []
 
 // baseUrl
 const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
-
-//body script
-//login
-// const login = () => {
-//     return new Promise((resolve, reject) => {
-//         axios.post(baseUrl, {
-//             "head": {
-//                 "code": 1, //code 1: login
-//                 "cID": 3322,
-//                 "version": 2
-//             },
-//             "body": {
-//                 "email": "tdinhphuoc@gmail.com",
-//                 "pass": "12345678"
-//             }
-//         }, {
-//             headers: {
-//                 "Content-Type": "application/json",
-//             },
-//             withCredentials: true,
-//         })
-//             .then(response => {
-//                 localStorage.setItem('token', JSON.stringify(response.data.chatToken))
-//                 localStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
-//                 resolve(response)
-//             })
-//             .catch(error => {
-//                 console.log(error)
-//                 reject(error)
-//             })
-//     })
-// }
-
-// // get list friends
-// const getListFriends = () => {
-//     Promise.all([login()])
-//         .then(() => {
-//             const dataUser = JSON.parse(localStorage.getItem('dataUser'))
-//             const token = JSON.parse(localStorage.getItem('token'))
-
-//             axios.post(baseUrl, {
-//                 "head": {
-//                     "code": 145, //code 145: list friend
-//                     "userID": dataUser.userID,
-//                     "token": token,
-//                     "cID": dataUser.cID,
-//                     "version": 2
-//                 },
-//                 "body": {}
-//             }, {
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                 }
-//             })
-//                 .then(response => {
-//                     listFriends = [...response.data.members]
-//                     console.log(listFriends)
-//                     var htmls = listFriends.map((friend) => {
-//                         console.log(friend)
-//                         return `<div class="row row-card-avatar g-0">
-//                         <div class="col-3 col-md-3 custom-img">
-//                             <img src="./asset/image/avatar5.jpeg" class="img-fluid avatar-group" alt="...">
-//                         </div>
-//                         <div class="col-9 col-md-9 d-flex align-items-center">
-//                             <div class="card-body">
-//                                 <h5 id="nameFriend" class="card-title">${friend.f_name}</h5>
-//                                 <p class="card-text"><small class="text-body-secondary">last messages</small></p>
-//                             </div>
-//                         </div>
-//                     </div>`
-//                     })
-//                     var html = htmls.join('')
-//                     document.getElementById('wrap-friend').innerHTML = html
-//                 })
-//                 .catch(error => {
-//                     console.log(error)
-//                 })
-//         })
-//         .catch(error => {
-//             console.log(error)
-//         })
-// }
-// getListFriends()
-
-// //render friend UI
-// const friendsUI = (id, name) => {
-// }
 
 document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
@@ -128,28 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location = '/login.html'
     })
 })
-
-// get list friends
-const handleClickCardFriend = (friendData) => {
-    console.log('data friend', friendData)
-
-    //load last mess 1-1
-    socket.emit('load_last_mess', {
-        senderid: friendData.id, //friend id
-        receiverid: friendData.connectionid //userId
-    }, (err, data) => {
-        console.log('lastMessPrivate', data)
-    })
-
-    //history mess 1-1
-    socket.emit('chat_history', {
-        senderid: friendData.id, //friend id
-        receiverid: friendData.connectionid //userId
-    }, (err, data) => {
-        console.log('historyPrivate', data)
-    })
-}
-getListFriends(token, dataUser, baseUrl, handleClickCardFriend)
 
 //event socket
 var socket = io.connect('https://node.surecommand.com/', {
@@ -173,6 +64,55 @@ socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
 
+// CHAT 1-1
+// get list friends
+let isGroup = false
+const handleRenderCardFriend = (friendData) => {
+    friendData.map((friend) => {
+        console.log(friend)
+        //get lastInfo chat 1-1
+        socket.emit('load_last_mess', {
+            senderid: friend.id, // friend.id
+            receiverid: dataUser.userID //userId
+        }, (err, data) => {
+            console.log('lastMessPrivate', data)
+
+            //time
+            const time = data && data[0] ?
+                `${moment(data[0].timestamp).format('HH:mm')} ${moment(data[0].timestamp).format('MMM DD, YYYY')}` : ''
+            document.getElementById(`card-time-${friend.id}`).innerHTML = time
+
+            //mess
+            if (data && data[0]) {
+                if (data.senderid === dataUser.userID) {
+                    document.getElementById(`card-text-${friend.id}`).innerHTML = 'you send ' + data[0].message
+                } else {
+                    document.getElementById(`card-text-${friend.id}`).innerHTML = friend.f_name + ' : ' + data[0].message
+                }
+            } else {
+                document.getElementById(`card-text-${friend.id}`).innerHTML = ''
+            }
+        })
+
+        //get history 1-1
+        const x = document.getElementById(`friend-${friend.id}`)
+        x.addEventListener('click', () => {
+            isGroup = true
+            socket.emit('chat_history', {
+                senderid: friend.id, // friend.id
+                receiverid: dataUser.userID //userId
+            }, (err, dataPrivate) => {
+                console.log(dataPrivate)
+                var isCurrentUser = dataPrivate.senderid === randomUser
+                // tạm dùng randomUser để fake
+                // id dataUser.userID
+            })
+        })
+    })
+}
+getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
+
+//CHAT GROUP
 // check new-mess
 const displayedMessages = []
 socket.on('new_mess', (data) => {
@@ -181,33 +121,37 @@ socket.on('new_mess', (data) => {
         addMessageToChat(data.content, isCurrentUser, false, data)
         displayedMessages.push(data.id)
     } else {
-        getHistoryMessages()
+        getHistoryMessagesGroup()
     }
 })
 
 // get last mess
-function getLastMessage() {
+function getLastMessageGroup() {
     socket.emit('push2talk_last_msg', {}, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             lastMessageId = res.Messages.id
-            getHistoryMessages(res.Messages.id, false)
+            getHistoryMessagesGroup(res.Messages.id, false)
             chatWrapper.addEventListener('scroll', () => {
                 if (chatWrapper.scrollTop === 0) {
                     isScrolling = true
                     lastMessageId = Math.max(0, lastMessageId - 10)
-                    getHistoryMessages(lastMessageId, isScrolling)
+                    getHistoryMessagesGroup(lastMessageId, isScrolling)
                 }
             })
         }
     })
 }
-getLastMessage()
+// getLastMessageGroup()
+groupSurecommand.addEventListener('click', () => {
+    groupSurecommand.classList.add('active')
+    getLastMessageGroup()
+})
 
 //get history mess
-function getHistoryMessages(id, isScrolling) {
-    socket.emit('push2talk_load_msg', { start: ++id, numView: 40 }, (err, res) => {
+function getHistoryMessagesGroup(id, isScrolling) {
+    socket.emit('push2talk_load_msg', { start: ++id, numView: 20 }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
@@ -232,7 +176,7 @@ function getHistoryMessages(id, isScrolling) {
     })
 }
 
-//add mess lên UI
+//add mess UI
 function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
     // div wrapper
     const messageDiv = document.createElement('div')
@@ -320,7 +264,9 @@ function sendMessage() {
     }
 }
 
-sendMessageButton.addEventListener('click', sendMessage)
+sendMessageButton.addEventListener('click', () => {
+    sendMessage()
+})
 
 messageInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {

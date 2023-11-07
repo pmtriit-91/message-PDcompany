@@ -22,7 +22,6 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                 newCard.className = 'card'
                 newCard.style.maxWidth = '540px'
 
-                const friendData = friend
                 newCard.id = `friend-${friend.id}`
 
                 newCard.innerHTML = `
@@ -33,17 +32,19 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                         <div class="col-9 col-md-9 d-flex align-items-center">
                             <div class="card-body">
                                 <h5 class="card-title">${friend.f_name}</h5>
-                                <p class="card-text"><small class="text-body-secondary">last message</small></p>
+                                <p class="card-text card-text-sub"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
+                                <p class="card-text card-text-sub"><small id="card-time-${friend.id}" class="text-body-secondary">time</small></p>
                             </div>
                         </div>
                     </div>
                 `
 
-                newCard.addEventListener('click', (event) => {
-                    callback(friendData)
-                })
+                // newCard.addEventListener('click', (event) => {
+                //     callback(friendData)
+                // })
                 bodyLeft.appendChild(newCard)
             })
+            callback(listFriends)
         })
         .catch(error => {
             console.log(error)
