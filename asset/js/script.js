@@ -1,9 +1,7 @@
 import { randomAvatarURL, randomName } from './randomName.js'
 import getListFriends from './listFriend.js'
 
-const bodyLeft = document.querySelector('#body-left')
 const chatWrapper = document.querySelector('.wrapper-chat')
-const divWrapper = document.getElementById('wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
 
 const sendMessageButton = document.getElementById('send-button')
@@ -26,8 +24,11 @@ let isScrolling = false
 //cid
 const cID = '3322'
 
-//id
+//array id group 
 const loadedMessageIDs = []
+
+//array id 1-1
+const loadedMessagePrivateIDs = []
 
 //state active group
 let isGroup = false
@@ -72,38 +73,23 @@ socket.on('connect', () => {
 // CHAT 1-1
 // get list friends
 const handleRenderCardFriend = (friendData) => {
-    friendData.map((friend) => {
+    friendData.forEach((friend) => {
         //get lastInfo chat 1-1
-        socket.emit('load_last_mess', {
-            senderid: friend.id, // friend.id
-            receiverid: dataUser.userID //userId
-        }, (err, data) => {
-            console.log('lastMessPrivate', data)
-
-            //time
-            const time = data && data[0] ?
-                `${moment(data[0].timestamp).format('HH:mm')} ${moment(data[0].timestamp).format('MMM DD, YYYY')}` : ''
-            document.getElementById(`card-time-${friend.id}`).innerHTML = time
-
-            //mess
-            if (data && data[0]) {
-                if (data.senderid === dataUser.userID) {
-                    document.getElementById(`card-text-${friend.id}`).innerHTML = 'you send ' + data[0].message
-                } else {
-                    document.getElementById(`card-text-${friend.id}`).innerHTML = friend.f_name + ' : ' + data[0].message
-                }
-            } else {
-                document.getElementById(`card-text-${friend.id}`).innerHTML = ''
-            }
-        })
+        getLastMessPrivate(friend)
 
         //get history 1-1
         const cardFriend = document.getElementById(`friend-${friend.id}`)
+        const newChatDiv = $("<div>").addClass(`wrapper-private-chat-${friend.id}`)
+
         cardFriend.addEventListener('click', () => {
             isGroup = false
+            console.log(isGroup)
+            $("#wrapper-chat").after(newChatDiv)
 
             //xóa active group
             groupSurecommand.classList.remove('active')
+            $("#wrapper-chat").hide()
+            $(".wrapper-private-chat").show()
 
             // Loại bỏ class "active" từ tất cả các card friend trước đó
             activeCardFriends.forEach(activeCard => {
@@ -113,23 +99,102 @@ const handleRenderCardFriend = (friendData) => {
             // active
             cardFriend.classList.add('active')
 
-            //clean content inside wrapperChat
-
-            //event history chat 1-1
-            socket.emit('chat_history', {
-                senderid: friend.id, // friend.id
-                receiverid: dataUser.userID //userId
-            }, (err, dataPrivate) => {
-                console.log(dataPrivate)
-                var isCurrentUser = dataPrivate.senderid === randomUser
-                // tạm dùng randomUser để fake
-                // id đúng là dataUser.userID
-            })
+            getHistoryPrivate(friend)
         })
         activeCardFriends.push(cardFriend)
     })
 }
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
+
+//get last mess private
+const getLastMessPrivate = (friend) => {
+    //get lastInfo chat 1-1
+    socket.emit('load_last_mess', {
+        senderid: friend.id, // friend.id
+        receiverid: dataUser.userID //userId
+    }, (err, data) => {
+        if (err) {
+            console.log(err)
+        } else {
+            console.log('lastMessPrivate', data)
+
+            //add info sidebar left
+            //time
+            const time = data && data[0] ?
+                `${moment(data[0].timestamp).format('HH:mm')} ${moment(data[0].timestamp).format('MMM DD, YYYY')}` : ''
+            document.getElementById(`card-time-${friend.id}`).innerHTML = time
+
+            //last mess
+            if (data && data[0]) {
+                if (data.senderid === dataUser.userID) {
+                    document.getElementById(`card-text-${friend.id}`).innerHTML = 'you send ' + data[0].message
+                } else {
+                    document.getElementById(`card-text-${friend.id}`).innerHTML = friend.f_name + ' : ' + data[0].message
+                }
+            } else {
+                document.getElementById(`card-text-${friend.id}`).innerHTML = ''
+            }
+        }
+    })
+}
+
+//get history mess private
+const getHistoryPrivate = (friend) => {
+    console.log(friend.id)
+    //event history chat 1-1
+    socket.emit('chat_history', {
+        senderid: friend.id, // friend.id
+        receiverid: dataUser.userID, //userId
+        numView: 10
+    }, (err, dataPrivate) => {
+        if (err) {
+            console.log(err)
+        } else {
+            //add history in DOM
+            const arrPrivateReverse = dataPrivate.Messages.reverse()
+            const newPrivateMessages = arrPrivateReverse.filter(message => !loadedMessagePrivateIDs.includes(message.id))
+            console.log('history chat 1-1 ', newPrivateMessages)
+
+            newPrivateMessages.forEach(message => {
+                loadedMessagePrivateIDs.push(message.id)
+                var isCurrentUser = message.senderid === dataUser.userID
+                addMessPrivate(message, isCurrentUser)
+            })
+        }
+    })
+}
+
+// add mess private UI
+const addMessPrivate = (data, isCurrentUser) => {
+    //xoá wrapper-chat tạo ra wrapper-private-chat và đổ dữ liệu
+    $(document).ready(function () {
+        $("#wrapper-chat").hide()
+        $(".wrapper-private-chat").show()
+
+
+        //
+        var div = $("<div>")
+
+        // Tạo thẻ <div> messageDiv và cấu trúc bên trong
+        var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+        var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : "test")
+
+        var messageTextDiv = $("<div>").html(
+            `<p id="tooltip-time" class=" small p-2' + 
+        (${isCurrentUser} ? null : 'ms-2') + ' mb-1 ' + (${isCurrentUser} ? 
+            'bg-primary text-black rounded-3' : 'bg-light rounded-3') + '">
+            ${data.message}
+            </p>`)
+
+        // Thêm các thành phần vào messageDiv
+        messageDiv.append(nameUser, messageTextDiv)
+
+        // Thêm messageDiv vào đầu wrapper-private-chat
+        $(".wrapper-private-chat").append(messageDiv)
+    })
+}
+
+// ----------------------------------------------------------------------------------------------- //
 
 //CHAT GROUP
 // check new-mess
@@ -165,6 +230,13 @@ function getLastMessageGroup() {
 // getLastMessageGroup()
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
+    console.log(isGroup)
+
+    //show lại wrapper-chat và ẩn đi wrapper-chat-group
+    $(document).ready(function () {
+        $("#wrapper-chat").show()
+        $(".wrapper-private-chat").hide()
+    })
 
     //active
     groupSurecommand.classList.add('active')

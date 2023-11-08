@@ -158,6 +158,18 @@
     right: 0;
 }
 
+/* test wrap-group */
+.wrap-right-card .wrapper-private-chat {
+    flex: 1;
+    padding-left: 20px;
+    padding-right: 20px;
+    overflow-y: scroll;
+    background-color: #ECF2FF;
+    display: none;
+}
+
+/* test wrap-group */
+
 .wrap-right-card .wrapper-chat {
     padding-left: 20px;
     padding-right: 20px;
