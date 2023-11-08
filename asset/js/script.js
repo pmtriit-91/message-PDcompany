@@ -79,17 +79,27 @@ const handleRenderCardFriend = (friendData) => {
 
         //get history 1-1
         const cardFriend = document.getElementById(`friend-${friend.id}`)
-        const newChatDiv = $("<div>").addClass(`wrapper-private-chat-${friend.id}`)
+        const newChatDiv = $("<div>")
+            .addClass(`wrapper-private-chat-${friend.id}`)
+            .css({
+                'flex': '1',
+                'padding-left': '20px',
+                'padding-right': '20px',
+                'overflow-y': 'scroll',
+                'background-color': '#ECF2FF',
+            })
 
         cardFriend.addEventListener('click', () => {
+            console.log(friend.id)
             isGroup = false
             console.log(isGroup)
+
             $("#wrapper-chat").after(newChatDiv)
 
-            //xóa active group
+
+            //xóa active va hide group
             groupSurecommand.classList.remove('active')
             $("#wrapper-chat").hide()
-            $(".wrapper-private-chat").show()
 
             // Loại bỏ class "active" từ tất cả các card friend trước đó
             activeCardFriends.forEach(activeCard => {
@@ -99,10 +109,11 @@ const handleRenderCardFriend = (friendData) => {
             // active
             cardFriend.classList.add('active')
 
-            getHistoryPrivate(friend)
+            getHistoryPrivate(friend, newChatDiv)
         })
         activeCardFriends.push(cardFriend)
     })
+
 }
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
 
@@ -139,7 +150,7 @@ const getLastMessPrivate = (friend) => {
 }
 
 //get history mess private
-const getHistoryPrivate = (friend) => {
+const getHistoryPrivate = (friend, newChatDiv) => {
     console.log(friend.id)
     //event history chat 1-1
     socket.emit('chat_history', {
@@ -158,22 +169,17 @@ const getHistoryPrivate = (friend) => {
             newPrivateMessages.forEach(message => {
                 loadedMessagePrivateIDs.push(message.id)
                 var isCurrentUser = message.senderid === dataUser.userID
-                addMessPrivate(message, isCurrentUser)
+                addMessPrivate(message, newChatDiv, isCurrentUser)
             })
         }
     })
 }
 
 // add mess private UI
-const addMessPrivate = (data, isCurrentUser) => {
+const addMessPrivate = (data, newChatDiv, isCurrentUser) => {
     //xoá wrapper-chat tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
         $("#wrapper-chat").hide()
-        $(".wrapper-private-chat").show()
-
-
-        //
-        var div = $("<div>")
 
         // Tạo thẻ <div> messageDiv và cấu trúc bên trong
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
@@ -190,7 +196,7 @@ const addMessPrivate = (data, isCurrentUser) => {
         messageDiv.append(nameUser, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-        $(".wrapper-private-chat").append(messageDiv)
+        newChatDiv.append(messageDiv)
     })
 }
 
@@ -235,7 +241,6 @@ groupSurecommand.addEventListener('click', () => {
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
     $(document).ready(function () {
         $("#wrapper-chat").show()
-        $(".wrapper-private-chat").hide()
     })
 
     //active
