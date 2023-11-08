@@ -29,9 +29,14 @@ const cID = '3322'
 //id
 const loadedMessageIDs = []
 
+//state active group
+let isGroup = false
+
+//lưu mảng các cardFriend
+const activeCardFriends = []
+
 // baseUrl
 const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
-
 document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
         window.location = '/login.html'
@@ -66,10 +71,8 @@ socket.on('connect', () => {
 
 // CHAT 1-1
 // get list friends
-let isGroup = false
 const handleRenderCardFriend = (friendData) => {
     friendData.map((friend) => {
-        console.log(friend)
         //get lastInfo chat 1-1
         socket.emit('load_last_mess', {
             senderid: friend.id, // friend.id
@@ -95,9 +98,24 @@ const handleRenderCardFriend = (friendData) => {
         })
 
         //get history 1-1
-        const x = document.getElementById(`friend-${friend.id}`)
-        x.addEventListener('click', () => {
-            isGroup = true
+        const cardFriend = document.getElementById(`friend-${friend.id}`)
+        cardFriend.addEventListener('click', () => {
+            isGroup = false
+
+            //xóa active group
+            groupSurecommand.classList.remove('active')
+
+            // Loại bỏ class "active" từ tất cả các card friend trước đó
+            activeCardFriends.forEach(activeCard => {
+                activeCard.classList.remove('active')
+            })
+
+            // active
+            cardFriend.classList.add('active')
+
+            //clean content inside wrapperChat
+
+            //event history chat 1-1
             socket.emit('chat_history', {
                 senderid: friend.id, // friend.id
                 receiverid: dataUser.userID //userId
@@ -105,9 +123,10 @@ const handleRenderCardFriend = (friendData) => {
                 console.log(dataPrivate)
                 var isCurrentUser = dataPrivate.senderid === randomUser
                 // tạm dùng randomUser để fake
-                // id dataUser.userID
+                // id đúng là dataUser.userID
             })
         })
+        activeCardFriends.push(cardFriend)
     })
 }
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
@@ -145,7 +164,16 @@ function getLastMessageGroup() {
 }
 // getLastMessageGroup()
 groupSurecommand.addEventListener('click', () => {
+    isGroup = true
+
+    //active
     groupSurecommand.classList.add('active')
+    //remove active 
+    activeCardFriends.forEach(activeCard => {
+        activeCard.classList.remove('active')
+    })
+
+    //get lastmess
     getLastMessageGroup()
 })
 
@@ -264,13 +292,40 @@ function sendMessage() {
     }
 }
 
+//send mess 1-1
+function sendMessagePrivate() {
+    const messageContent = messageInput.value.trim()
+
+    if (messageContent) {
+        const info = {
+            "userID": randomUser,
+            "cID": "36222",
+            "content": messageContent,
+            "type": "text",
+            "displayName": randomName,
+        }
+        // Reset the input field
+        messageInput.value = ''
+
+        emoji.style.display = 'none'
+    }
+}
+
 sendMessageButton.addEventListener('click', () => {
-    sendMessage()
+    if (isGroup === true) {
+        sendMessage()
+    } else {
+        sendMessagePrivate()
+    }
 })
 
 messageInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
-        sendMessage()
+        if (isGroup === true) {
+            sendMessage()
+        } else {
+            sendMessagePrivate()
+        }
     }
 })
