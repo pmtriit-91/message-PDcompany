@@ -19,7 +19,7 @@ function getListFriends(token, dataUser, baseUrl, callback) {
             const listFriends = [...response.data.members]
             listFriends.map((friend) => {
                 const newCard = document.createElement('div')
-                newCard.className = 'card'
+                newCard.className = 'card card-friend'
                 newCard.style.maxWidth = '540px'
 
                 newCard.id = `friend-${friend.id}`
@@ -38,10 +38,6 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                         </div>
                     </div>
                 `
-
-                // newCard.addEventListener('click', (event) => {
-                //     callback(friendData)
-                // })
                 bodyLeft.appendChild(newCard)
             })
             callback(listFriends)

@@ -73,6 +73,7 @@ socket.on('connect', () => {
 // CHAT 1-1
 // get list friends
 const handleRenderCardFriend = (friendData) => {
+    const arrayPrivate = []
     friendData.forEach((friend) => {
         //get lastInfo chat 1-1
         getLastMessPrivate(friend)
@@ -90,12 +91,16 @@ const handleRenderCardFriend = (friendData) => {
             })
 
         cardFriend.addEventListener('click', () => {
-            console.log(friend.id)
             isGroup = false
-            console.log(isGroup)
+
+            arrayPrivate.forEach(nodeElm => {
+                nodeElm != newChatDiv ? nodeElm.hide() : nodeElm.show()
+            })
 
             $("#wrapper-chat").after(newChatDiv)
 
+
+            arrayPrivate.push(newChatDiv)
 
             //xóa active va hide group
             groupSurecommand.classList.remove('active')
@@ -113,7 +118,6 @@ const handleRenderCardFriend = (friendData) => {
         })
         activeCardFriends.push(cardFriend)
     })
-
 }
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
 
@@ -156,7 +160,7 @@ const getHistoryPrivate = (friend, newChatDiv) => {
     socket.emit('chat_history', {
         senderid: friend.id, // friend.id
         receiverid: dataUser.userID, //userId
-        numView: 10
+        numView: 50
     }, (err, dataPrivate) => {
         if (err) {
             console.log(err)
@@ -177,7 +181,7 @@ const getHistoryPrivate = (friend, newChatDiv) => {
 
 // add mess private UI
 const addMessPrivate = (data, newChatDiv, isCurrentUser) => {
-    //xoá wrapper-chat tạo ra wrapper-private-chat và đổ dữ liệu
+    //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
         $("#wrapper-chat").hide()
 
@@ -186,14 +190,12 @@ const addMessPrivate = (data, newChatDiv, isCurrentUser) => {
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : "test")
 
         var messageTextDiv = $("<div>").html(
-            `<p id="tooltip-time" class=" small p-2' + 
-        (${isCurrentUser} ? null : 'ms-2') + ' mb-1 ' + (${isCurrentUser} ? 
-            'bg-primary text-black rounded-3' : 'bg-light rounded-3') + '">
-            ${data.message}
-            </p>`)
+            `<p id="tooltip-time" class=" small p-2' + (${isCurrentUser} ? null : 'ms-2') + ' mb-1 ' + (${isCurrentUser} ? 
+            'bg-primary text-black rounded-3' : 'bg-light rounded-3') + '">${data.message}</p>`)
+        var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // Thêm các thành phần vào messageDiv
-        messageDiv.append(nameUser, messageTextDiv)
+        messageDiv.append(nameUser, avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         newChatDiv.append(messageDiv)
@@ -241,6 +243,7 @@ groupSurecommand.addEventListener('click', () => {
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
     $(document).ready(function () {
         $("#wrapper-chat").show()
+        $("[class^='wrapper-private-chat-']").hide()
     })
 
     //active
