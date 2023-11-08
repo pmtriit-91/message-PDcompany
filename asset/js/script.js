@@ -160,7 +160,7 @@ const getHistoryPrivate = (friend, newChatDiv) => {
     socket.emit('chat_history', {
         senderid: friend.id, // friend.id
         receiverid: dataUser.userID, //userId
-        numView: 50
+        numView: 10
     }, (err, dataPrivate) => {
         if (err) {
             console.log(err)
@@ -189,13 +189,13 @@ const addMessPrivate = (data, newChatDiv, isCurrentUser) => {
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : "test")
 
-        var messageTextDiv = $("<div>").html(
-            `<p id="tooltip-time" class=" small p-2' + (${isCurrentUser} ? null : 'ms-2') + ' mb-1 ' + (${isCurrentUser} ? 
-            'bg-primary text-black rounded-3' : 'bg-light rounded-3') + '">${data.message}</p>`)
+        var messageTextDiv = $("<div>").html(`
+          <p id="tooltip-time" class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-black rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
+        `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // Thêm các thành phần vào messageDiv
-        messageDiv.append(nameUser, avatarImg, messageTextDiv)
+        messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         newChatDiv.append(messageDiv)
