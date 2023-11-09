@@ -18,7 +18,6 @@ const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem(
 localStorage.setItem('userID', randomUser)
 
 //state lastID và trạng thái event scrollTop
-let lastMessageId = null
 let isScrolling = false
 
 //cid
@@ -126,7 +125,7 @@ const getLastMessPrivate = (friend) => {
     //get lastInfo chat 1-1
     socket.emit('load_last_mess', {
         senderid: friend.id, // friend.id
-        receiverid: dataUser.userID //userId
+        receiverid: Number(dataUser.userID) //userId
     }, (err, data) => {
         if (err) {
             console.log(err)
@@ -141,13 +140,13 @@ const getLastMessPrivate = (friend) => {
 
             //last mess
             if (data && data[0]) {
-                if (data.senderid === dataUser.userID) {
-                    document.getElementById(`card-text-${friend.id}`).innerHTML = 'you send ' + data[0].message
+                if (data[0].senderid === Number(dataUser.userID)) {
+                    $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
                 } else {
-                    document.getElementById(`card-text-${friend.id}`).innerHTML = friend.f_name + ' : ' + data[0].message
+                    $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
                 }
             } else {
-                document.getElementById(`card-text-${friend.id}`).innerHTML = ''
+                $(`#card-text-${friend.id}`).text('')
             }
         }
     })
@@ -160,7 +159,7 @@ const getHistoryPrivate = (friend, newChatDiv) => {
     socket.emit('chat_history', {
         senderid: friend.id, // friend.id
         receiverid: dataUser.userID, //userId
-        numView: 10
+        numView: 20
     }, (err, dataPrivate) => {
         if (err) {
             console.log(err)
@@ -172,25 +171,25 @@ const getHistoryPrivate = (friend, newChatDiv) => {
 
             newPrivateMessages.forEach(message => {
                 loadedMessagePrivateIDs.push(message.id)
-                var isCurrentUser = message.senderid === dataUser.userID
-                addMessPrivate(message, newChatDiv, isCurrentUser)
+                var isCurrentUser = message.senderid === Number(dataUser.userID)
+                addMessPrivate(message, newChatDiv, friend, isCurrentUser)
             })
         }
     })
 }
 
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, isCurrentUser) => {
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser) => {
     //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
         $("#wrapper-chat").hide()
 
         // Tạo thẻ <div> messageDiv và cấu trúc bên trong
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
-        var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : "test")
+        var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
         var messageTextDiv = $("<div>").html(`
-          <p id="tooltip-time" class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-black rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
+          <p id="tooltip-time" class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
         `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
@@ -213,7 +212,7 @@ socket.on('new_mess', (data) => {
         addMessageToChat(data.content, isCurrentUser, false, data)
         displayedMessages.push(data.id)
     } else {
-        getHistoryMessagesGroup()
+        getLastMessageGroup()
     }
 })
 
@@ -223,8 +222,11 @@ function getLastMessageGroup() {
         if (err) {
             console.log(err)
         } else {
-            lastMessageId = res.Messages.id
-            getHistoryMessagesGroup(res.Messages.id, false)
+            let lastMessageId = res.Messages.id
+            if (!loadedMessageIDs.includes(++lastMessageId)) {
+                loadedMessageIDs.push(lastMessageId)
+                getHistoryMessagesGroup(lastMessageId)
+            }
             chatWrapper.addEventListener('scroll', () => {
                 if (chatWrapper.scrollTop === 0) {
                     isScrolling = true
@@ -235,6 +237,7 @@ function getLastMessageGroup() {
         }
     })
 }
+
 // getLastMessageGroup()
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
@@ -272,9 +275,13 @@ function getHistoryMessagesGroup(id, isScrolling) {
             newMessages.forEach(message => {
                 loadedMessageIDs.push(message.id)
                 var isCurrentUser = message.userID === randomUser
+
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
                     addMessageToChat(message.content, isCurrentUser, true, message)
+                    if (loadedMessageIDs.includes(message.id)) {
+
+                    }
                 } else {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
                     addMessageToChat(message.content, isCurrentUser, false, message)
