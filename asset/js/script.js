@@ -30,7 +30,7 @@ const loadedMessageIDs = []
 const loadedMessagePrivateIDs = []
 
 //state active group
-let isGroup = false
+let isGroup = true
 
 //lưu mảng các cardFriend
 const activeCardFriends = []
@@ -204,6 +204,9 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser) => {
 // ----------------------------------------------------------------------------------------------- //
 
 //CHAT GROUP
+
+getLastMessageGroup()
+
 // check new-mess
 const displayedMessages = []
 socket.on('new_mess', (data) => {
@@ -238,7 +241,7 @@ function getLastMessageGroup() {
     })
 }
 
-// getLastMessageGroup()
+// getLastMessageGroup() + event click
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
