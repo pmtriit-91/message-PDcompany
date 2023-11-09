@@ -205,7 +205,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser) => {
 
 //CHAT GROUP
 
-getLastMessageGroup()
+getHistoryMessagesGroup()
 
 // check new-mess
 const displayedMessages = []
@@ -226,10 +226,10 @@ function getLastMessageGroup() {
             console.log(err)
         } else {
             let lastMessageId = res.Messages.id
-            if (!loadedMessageIDs.includes(++lastMessageId)) {
-                loadedMessageIDs.push(lastMessageId)
-                getHistoryMessagesGroup(lastMessageId)
-            }
+            // if (!loadedMessageIDs.includes(++lastMessageId)) {
+            //     loadedMessageIDs.push(lastMessageId)
+            //     // getHistoryMessagesGroup(lastMessageId)
+            // }
             chatWrapper.addEventListener('scroll', () => {
                 if (chatWrapper.scrollTop === 0) {
                     isScrolling = true
