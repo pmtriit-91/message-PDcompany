@@ -20,6 +20,9 @@ localStorage.setItem('userID', randomUser)
 //state lastID và trạng thái event scrollTop
 let isScrolling = false
 
+// scrollTop chat 1-1
+let isPrivateScrolling = false
+
 //cid
 const cID = '3322'
 
@@ -51,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
-            userID: randomUser,
+            userID: dataUser.userID,
             cid: cID,
         })
     },
@@ -71,13 +74,43 @@ socket.on('connect', () => {
 
 // CHAT 1-1
 // get list friends
+
+// tra thong tin socket bên phía user nhận
+socket.on("chat_new_message", (err, data) => {
+    console.log("data 77", data)
+})
+
+//send mess 1-1
+function sendMessagePrivate(friendID, friend, newChatDiv) {
+    const messageContent = messageInput.value.trim()
+    console.log('check friendID :', friendID)
+    console.log(friend)
+
+    if (messageContent) {
+        const info = {
+            "senderid": dataUser.userID,
+            "receiverid": friendID,
+            "cid": "3322",
+            "message": messageContent,
+        }
+
+        socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
+            console.log('data', data)
+            data && addMessPrivate(data.msg, newChatDiv, friend, true)
+        })
+
+        // Reset the input field
+        messageInput.value = ''
+
+        emoji.style.display = 'none'
+    }
+}
+
 const handleRenderCardFriend = (friendData) => {
     const arrayPrivate = []
     friendData.forEach((friend) => {
-        //get lastInfo chat 1-1
-        getLastMessPrivate(friend)
 
-        //get history 1-1
+        //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
         const newChatDiv = $("<div>")
             .addClass(`wrapper-private-chat-${friend.id}`)
@@ -89,16 +122,53 @@ const handleRenderCardFriend = (friendData) => {
                 'background-color': '#ECF2FF',
             })
 
+        //get lastInfo chat 1-1
+        getLastMessPrivate(friend, newChatDiv)
+
+        //create head-img
+        const headCardImg = $('.custom-img-head')
+
         cardFriend.addEventListener('click', () => {
             isGroup = false
+            console.log('isGroup: ', false)
 
+            //send mess 1-1
+            // add click and keypress event outside the loop
+            sendMessageButton.addEventListener('click', () => {
+                if (!isGroup) {
+                    const activeCard = document.querySelector('.card-friend.active')
+                    if (activeCard) {
+                        const friendID = activeCard.id.split('-')[1]
+                        sendMessagePrivate(friendID, friend, newChatDiv)
+                    }
+                }
+            })
+
+            messageInput.addEventListener('keypress', (event) => {
+                if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault()
+                    const activeCard = document.querySelector('.card-friend.active')
+                    if (activeCard) {
+                        const friendID = activeCard.id.split('-')[1]
+                        sendMessagePrivate(friendID, friend, newChatDiv)
+                    }
+                }
+            })
+
+            //action switch headCardImg
+            headCardImg.html(`
+            <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
+            <div class="card-head-custom">
+                <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
+            </div>
+            `)
+
+            //action hide/show wrapper-private-chat
             arrayPrivate.forEach(nodeElm => {
                 nodeElm != newChatDiv ? nodeElm.hide() : nodeElm.show()
             })
 
             $("#wrapper-chat").after(newChatDiv)
-
-
             arrayPrivate.push(newChatDiv)
 
             //xóa active va hide group
@@ -121,7 +191,7 @@ const handleRenderCardFriend = (friendData) => {
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
 
 //get last mess private
-const getLastMessPrivate = (friend) => {
+const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
     socket.emit('load_last_mess', {
         senderid: friend.id, // friend.id
@@ -145,6 +215,16 @@ const getLastMessPrivate = (friend) => {
                 } else {
                     $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
                 }
+
+                //scrollTop event
+                newChatDiv.on('scroll', () => {
+                    if (newChatDiv.scrollTop() === 0) {
+                        isPrivateScrolling = true
+                        let lastMessageId = Math.max(0, data[0].id - 20)
+                        getHistoryPrivate(friend, newChatDiv, lastMessageId, isPrivateScrolling)
+                    }
+                })
+
             } else {
                 $(`#card-text-${friend.id}`).text('')
             }
@@ -153,33 +233,43 @@ const getLastMessPrivate = (friend) => {
 }
 
 //get history mess private
-const getHistoryPrivate = (friend, newChatDiv) => {
+const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
+    console.log(id)
     console.log(friend.id)
     //event history chat 1-1
     socket.emit('chat_history', {
         senderid: friend.id, // friend.id
         receiverid: dataUser.userID, //userId
+        start: ++id,
         numView: 20
     }, (err, dataPrivate) => {
         if (err) {
             console.log(err)
         } else {
+            console.log('dataPrivate ', dataPrivate)
             //add history in DOM
             const arrPrivateReverse = dataPrivate.Messages.reverse()
             const newPrivateMessages = arrPrivateReverse.filter(message => !loadedMessagePrivateIDs.includes(message.id))
-            console.log('history chat 1-1 ', newPrivateMessages)
 
             newPrivateMessages.forEach(message => {
                 loadedMessagePrivateIDs.push(message.id)
                 var isCurrentUser = message.senderid === Number(dataUser.userID)
                 addMessPrivate(message, newChatDiv, friend, isCurrentUser)
+
+                if (isPrivateScrolling) {
+                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                    addMessPrivate(message.message, newChatDiv, friend, isCurrentUser, true)
+                } else {
+                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                    addMessPrivate(message.message, newChatDiv, friend, isCurrentUser, false)
+                }
             })
         }
     })
 }
 
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, friend, isCurrentUser) => {
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling) => {
     //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
         $("#wrapper-chat").hide()
@@ -245,6 +335,16 @@ function getLastMessageGroup() {
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
+
+    // create head-img
+    $('.custom-img-head').html(`
+        <div class="col-10 col-md-8 col-lg-6 custom-img custom-img-head">
+            <img src="./asset/image/groupAvatar3.jpeg" class=" img-fluid avatar-group"
+                alt="...">
+            <div class="card-head-custom">
+                <h5 class="card-title" style="text-align: left;">Group Surecommand</h5>
+            </div>
+        </div>`)
 
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
     $(document).ready(function () {
@@ -382,40 +482,18 @@ function sendMessage() {
     }
 }
 
-//send mess 1-1
-function sendMessagePrivate() {
-    const messageContent = messageInput.value.trim()
-
-    if (messageContent) {
-        const info = {
-            "userID": randomUser,
-            "cID": "36222",
-            "content": messageContent,
-            "type": "text",
-            "displayName": randomName,
-        }
-        // Reset the input field
-        messageInput.value = ''
-
-        emoji.style.display = 'none'
-    }
-}
-
 sendMessageButton.addEventListener('click', () => {
     if (isGroup === true) {
         sendMessage()
-    } else {
-        sendMessagePrivate()
     }
 })
 
 messageInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
+
         if (isGroup === true) {
             sendMessage()
-        } else {
-            sendMessagePrivate()
         }
     }
 })

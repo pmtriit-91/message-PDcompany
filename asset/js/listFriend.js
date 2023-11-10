@@ -17,7 +17,20 @@ function getListFriends(token, dataUser, baseUrl, callback) {
     })
         .then(response => {
             const listFriends = [...response.data.members]
+            //mảng check index không trùng lặp
+            const usedIndexes = []
             listFriends.map((friend) => {
+
+                const array = [4, 5, 6]
+                // Tìm một chỉ số không trùng lặp
+                let randomIndex
+                do {
+                    randomIndex = Math.floor(Math.random() * array.length)
+                } while (usedIndexes.includes(randomIndex))
+
+                // Thêm chỉ số vào mảng đã sử dụng
+                usedIndexes.push(randomIndex)
+
                 const newCard = document.createElement('div')
                 newCard.className = 'card card-friend'
                 newCard.style.maxWidth = '540px'
@@ -27,7 +40,7 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                 newCard.innerHTML = `
                     <div class="row row-card-avatar g-0">
                         <div class="col-3 col-md-3 custom-img">
-                            <img src="./asset/image/avatar5.jpeg" class="img-fluid avatar-group" alt="...">
+                            <img src="./asset/image/avatar${array[randomIndex]}.jpeg" class="img-fluid avatar-group" alt="...">
                         </div>
                         <div class="col-9 col-md-9 d-flex align-items-center">
                             <div class="card-body">
