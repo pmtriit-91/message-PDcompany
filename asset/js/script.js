@@ -254,14 +254,14 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
             newPrivateMessages.forEach(message => {
                 loadedMessagePrivateIDs.push(message.id)
                 var isCurrentUser = message.senderid === Number(dataUser.userID)
-                addMessPrivate(message, newChatDiv, friend, isCurrentUser)
+                // addMessPrivate(message, newChatDiv, friend, isCurrentUser)
 
                 if (isPrivateScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                    addMessPrivate(message.message, newChatDiv, friend, isCurrentUser, true)
+                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, true)
                 } else {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                    addMessPrivate(message.message, newChatDiv, friend, isCurrentUser, false)
+                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, false)
                 }
             })
         }
@@ -287,7 +287,15 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-        newChatDiv.append(messageDiv)
+        // newChatDiv.append(messageDiv)
+
+        if (isPrivateScrolling) {
+            newChatDiv.prepend(messageDiv);
+            newChatDiv.scrollTop(newChatDiv.height());
+        } else {
+            // newChatDiv.appendChild(messageDiv)
+            // newChatDiv.scrollTop() = newChatDiv.height()
+        }
     })
 }
 
