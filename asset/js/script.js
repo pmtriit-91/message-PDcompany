@@ -23,9 +23,6 @@ let isScrolling = false
 // scrollTop chat 1-1
 let isPrivateScrolling = false
 
-//cid
-const cID = '3322'
-
 //array id group 
 const loadedMessageIDs = []
 
@@ -77,7 +74,7 @@ var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
             userID: Number(dataUser.userID),
-            cid: cID,
+            cid: dataUser.cid,
         })
     },
     // withCredentials: true,
@@ -96,27 +93,20 @@ socket.on('connect', () => {
 
 // CHAT 1-1
 // get list friends
-
-// tra thong tin socket bên phía user nhận
-socket.on("socket_result", (data) => {
-    console.log("data 77", data)
-})
-
 //send mess 1-1
 function sendMessagePrivate(friendID, friend, newChatDiv) {
     const messageContent = messageInput.value.trim()
-    console.log('check friendID :', friendID)
+    // console.log('check friendID :', friendID)
 
     if (messageContent) {
         const info = {
             "senderid": dataUser.userID,
             "receiverid": friendID,
-            "cid": "3322",
+            "cid": dataUser.cid,
             "message": messageContent,
         }
 
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            console.log('data', data)
             data && addMessPrivate(data.msg, newChatDiv, friend, true)
         })
 
@@ -133,7 +123,7 @@ const handleRenderCardFriend = (friendData) => {
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
         const newChatDiv = $("<div>")
-            .addClass(`wrapper-private-chat-${friend.id}`)
+            .addClass(`wrapper-private-chat`)
             .css({
                 'flex': '1',
                 'padding-left': '20px',
@@ -145,12 +135,22 @@ const handleRenderCardFriend = (friendData) => {
         //get lastInfo chat 1-1
         getLastMessPrivate(friend, newChatDiv)
 
+        // // tra thong tin socket bên phía user nhận
+        socket.on("socket_result", (data) => {
+            const result = data.data
+            console.log("data result mess", result)
+            if (result) {
+                // isGroup === false ? isGroup = false : isGroup = true
+                getHistoryPrivate(friend, newChatDiv)
+            }
+        })
+
         //create head-img
         const headCardImg = $('.custom-img-head')
 
         cardFriend.addEventListener('click', () => {
             isGroup = false
-            console.log('isGroup: ', false)
+            // console.log('isGroup: ', false)
 
             //send mess 1-1
             // add click and keypress event outside the loop
@@ -394,7 +394,7 @@ groupSurecommand.addEventListener('click', () => {
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
     $(document).ready(function () {
         $("#wrapper-chat").show()
-        $("[class^='wrapper-private-chat-']").hide()
+        $("[class^='wrapper-private-chat']").hide()
     })
 
     //active
@@ -508,7 +508,7 @@ function sendMessage() {
     if (messageContent) {
         const info = {
             "userID": Number(dataUser.userID),
-            "cID": 3322,
+            "cID": dataUser.cid,
             "content": messageContent,
             "type": "text",
             "displayName": userInfo.profile.name_first,
