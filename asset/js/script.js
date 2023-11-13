@@ -252,12 +252,9 @@ const getLastMessPrivate = (friend, newChatDiv) => {
 
 //get history mess private
 const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
-    // console.log(id)
-    // console.log(friend.id)
-    //event history chat 1-1
     socket.emit('chat_history', {
-        senderid: friend.id, // friend.id
-        receiverid: dataUser.userID, //userId
+        senderid: friend.id,
+        receiverid: dataUser.userID,
         start: ++id,
         numView: 20
     }, (err, dataPrivate) => {
@@ -265,22 +262,34 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
             console.log(err)
         } else {
             console.log('dataPrivate ', dataPrivate)
-            //add history in DOM
-            const arrPrivateReverse = dataPrivate.Messages.reverse()
-            const newPrivateMessages = arrPrivateReverse.filter(message => !loadedMessagePrivateIDs.includes(message.id))
 
-            newPrivateMessages.forEach(message => {
-                loadedMessagePrivateIDs.push(message.id)
-                var isCurrentUser = message.senderid === Number(dataUser.userID)
+            // Tạo một mảng tạm thời để giữ tin nhắn theo thứ tự
+            const tempMessages = []
 
-                if (isPrivateScrolling) {
-                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, true)
-                } else {
-                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, false)
+            // Lặp qua tin nhắn từ server và thêm vào mảng tạm thời
+            dataPrivate.Messages.forEach(message => {
+                if (!loadedMessagePrivateIDs.includes(message.id)) {
+                    loadedMessagePrivateIDs.push(message.id)
+                    tempMessages.push(message)
                 }
-            })
+            });
+
+            // Sắp xếp mảng tạm thời theo thời gian
+            tempMessages.sort((a, b) => a.timestamp - b.timestamp)
+
+            if (isPrivateScrolling) {
+                // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                tempMessages.forEach(message => {
+                    var isCurrentUser = Number(message.senderid) === Number(dataUser.userID)
+                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, true)
+                });
+            } else {
+                // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                tempMessages.reverse().forEach(message => {
+                    var isCurrentUser = Number(message.senderid) === Number(dataUser.userID)
+                    addMessPrivate(message, newChatDiv, friend, isCurrentUser, false)
+                })
+            }
         }
     })
 }
@@ -322,10 +331,10 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-        // newChatDiv.append(messageDiv)
 
         if (isPrivateScrolling) {
             newChatDiv.prepend(messageDiv)
+            newChatDiv[0].scrollTop = newChatDiv[0].clientHeight
         } else {
             newChatDiv.append(messageDiv)
             newChatDiv[0].scrollTop = newChatDiv[0].scrollHeight
