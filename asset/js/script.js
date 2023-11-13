@@ -48,13 +48,35 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem('token')
         window.location = '/login.html'
     })
+
+    //get full user
+    axios.post(baseUrl, {
+        "head": {
+            "code": 126,
+            "cID": 3322,
+            "token": token,
+            "tokenFcm": '',
+            "userID": dataUser.userID,
+            "version": 2
+        }
+    }, {
+        headers: {
+            "Content-Type": "application/json",
+            // Authorization: 'Bearer ' + token,
+        },
+        withCredentials: true,
+    })
+        .then(response => {
+            localStorage.setItem('userInfo', JSON.stringify(response.data))
+        })
+        .catch(error => console.log(error))
 })
 
 //event socket
 var socket = io.connect('https://node.surecommand.com/', {
     query: {
         user: JSON.stringify({
-            userID: dataUser.userID,
+            userID: Number(dataUser.userID),
             cid: cID,
         })
     },
@@ -76,7 +98,7 @@ socket.on('connect', () => {
 // get list friends
 
 // tra thong tin socket bên phía user nhận
-socket.on("chat_new_message", (err, data) => {
+socket.on("socket_result", (data) => {
     console.log("data 77", data)
 })
 
@@ -84,7 +106,6 @@ socket.on("chat_new_message", (err, data) => {
 function sendMessagePrivate(friendID, friend, newChatDiv) {
     const messageContent = messageInput.value.trim()
     console.log('check friendID :', friendID)
-    console.log(friend)
 
     if (messageContent) {
         const info = {
@@ -109,7 +130,6 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 const handleRenderCardFriend = (friendData) => {
     const arrayPrivate = []
     friendData.forEach((friend) => {
-
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
         const newChatDiv = $("<div>")
@@ -235,8 +255,8 @@ const getLastMessPrivate = (friend, newChatDiv) => {
 
 //get history mess private
 const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
-    console.log(id)
-    console.log(friend.id)
+    // console.log(id)
+    // console.log(friend.id)
     //event history chat 1-1
     socket.emit('chat_history', {
         senderid: friend.id, // friend.id
@@ -283,6 +303,24 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
+        // create text time
+        const timestampP = document.createElement('p')
+        timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
+
+        const tooltipTime = timestampP.innerHTML = data && data.createdAt ?
+            `${moment(data.createdAt).format('HH:mm')} ${moment(data.createdAt).format('MMM DD, YYYY')}` : ''
+        messageTextDiv[0].firstElementChild.setAttribute('data-template', `${tooltipTime}`)
+
+        //tippy time
+        tippy('#tooltip-time', {
+            content(reference) {
+                return reference.getAttribute('data-template')
+            },
+            theme: 'material',
+            animation: 'scale',
+            trigger: 'click'
+        })
+
         // Thêm các thành phần vào messageDiv
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
@@ -308,7 +346,7 @@ getHistoryMessagesGroup()
 const displayedMessages = []
 socket.on('new_mess', (data) => {
     if (!displayedMessages.includes(data.id)) {
-        var isCurrentUser = data.userID === randomUser
+        var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
         addMessageToChat(data.content, isCurrentUser, false, data)
         displayedMessages.push(data.id)
     } else {
@@ -384,7 +422,7 @@ function getHistoryMessagesGroup(id, isScrolling) {
 
             newMessages.forEach(message => {
                 loadedMessageIDs.push(message.id)
-                var isCurrentUser = message.userID === randomUser
+                var isCurrentUser = message.userID === Number(dataUser.userID)
 
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
@@ -465,14 +503,15 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
 //send mess
 function sendMessage() {
     const messageContent = messageInput.value.trim()
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
 
     if (messageContent) {
         const info = {
-            "userID": randomUser,
-            "cID": "36222",
+            "userID": Number(dataUser.userID),
+            "cID": 3322,
             "content": messageContent,
             "type": "text",
-            "displayName": randomName,
+            "displayName": userInfo.profile.name_first,
         }
         socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
             if (err) {
