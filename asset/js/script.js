@@ -119,6 +119,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 
 const handleRenderCardFriend = (friendData) => {
     const arrayPrivate = []
+
     friendData.forEach((friend) => {
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
@@ -134,16 +135,6 @@ const handleRenderCardFriend = (friendData) => {
 
         //get lastInfo chat 1-1
         getLastMessPrivate(friend, newChatDiv)
-
-        // // tra thong tin socket bên phía user nhận
-        socket.on("socket_result", (data) => {
-            const result = data.data
-            console.log("data result mess", result)
-            if (result) {
-                // isGroup === false ? isGroup = false : isGroup = true
-                getHistoryPrivate(friend, newChatDiv)
-            }
-        })
 
         //create head-img
         const headCardImg = $('.custom-img-head')
@@ -203,7 +194,14 @@ const handleRenderCardFriend = (friendData) => {
             // active
             cardFriend.classList.add('active')
 
-            getHistoryPrivate(friend, newChatDiv)
+        })
+        getHistoryPrivate(friend, newChatDiv)
+        // // tra thong tin socket bên phía user nhận
+        socket.on("socket_result", (data) => {
+            console.log(data)
+            if (data && data.data) {
+                addMessPrivate(data.data, newChatDiv, friend, false, false)
+            }
         })
         activeCardFriends.push(cardFriend)
     })
