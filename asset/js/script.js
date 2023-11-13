@@ -194,11 +194,10 @@ const handleRenderCardFriend = (friendData) => {
             // active
             cardFriend.classList.add('active')
 
+            getHistoryPrivate(friend, newChatDiv)
         })
-        getHistoryPrivate(friend, newChatDiv)
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
-            console.log(data)
             if (data && data.data) {
                 addMessPrivate(data.data, newChatDiv, friend, false, false)
             }
