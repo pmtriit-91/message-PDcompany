@@ -217,10 +217,11 @@ const getLastMessPrivate = (friend, newChatDiv) => {
                 }
 
                 //scrollTop event
+                let lastMessageId = data[0].id
                 newChatDiv.on('scroll', () => {
                     if (newChatDiv.scrollTop() === 0) {
                         isPrivateScrolling = true
-                        let lastMessageId = Math.max(0, data[0].id - 20)
+                        lastMessageId = Math.max(0, lastMessageId - 20)
                         getHistoryPrivate(friend, newChatDiv, lastMessageId, isPrivateScrolling)
                     }
                 })
@@ -254,7 +255,6 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
             newPrivateMessages.forEach(message => {
                 loadedMessagePrivateIDs.push(message.id)
                 var isCurrentUser = message.senderid === Number(dataUser.userID)
-                // addMessPrivate(message, newChatDiv, friend, isCurrentUser)
 
                 if (isPrivateScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
@@ -290,11 +290,10 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         // newChatDiv.append(messageDiv)
 
         if (isPrivateScrolling) {
-            newChatDiv.prepend(messageDiv);
-            newChatDiv.scrollTop(newChatDiv.height());
+            newChatDiv.prepend(messageDiv)
         } else {
-            // newChatDiv.appendChild(messageDiv)
-            // newChatDiv.scrollTop() = newChatDiv.height()
+            newChatDiv.append(messageDiv)
+            newChatDiv[0].scrollTop = newChatDiv[0].scrollHeight
         }
     })
 }
