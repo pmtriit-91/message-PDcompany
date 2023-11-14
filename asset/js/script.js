@@ -93,9 +93,10 @@ socket.on('connect', () => {
 
 // CHAT 1-1
 // get list friends
-//send mess 1-1
+// lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
 let currentNewChatDiv = null
+//send mess 1-1
 function sendMessagePrivate(friendID, friend, newChatDiv) {
     const messageContent = messageInput.value.trim()
     console.log('check friendID :', friendID)
@@ -288,7 +289,7 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
                 tempMessages.forEach(message => {
                     var isCurrentUser = Number(message.senderid) === Number(dataUser.userID)
                     addMessPrivate(message, newChatDiv, friend, isCurrentUser, true)
-                });
+                })
             } else {
                 // Nếu không cuộn, thêm tin nhắn vào dưới cùng
                 tempMessages.reverse().forEach(message => {
@@ -302,12 +303,10 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 
 // add mess private UI
 const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling) => {
-    console.log(friend)
+    // console.log('data ', data)
+    // console.log('friend ', friend)
     //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
-        $("#wrapper-chat").hide()
-
-        // Tạo thẻ <div> messageDiv và cấu trúc bên trong
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
@@ -338,9 +337,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-
-        console.log(newChatDiv)
-
+        // console.log(newChatDiv)
         if (isPrivateScrolling) {
             newChatDiv.prepend(messageDiv)
             newChatDiv[0].scrollTop = newChatDiv[0].clientHeight
@@ -394,7 +391,7 @@ function getLastMessageGroup() {
 // getLastMessageGroup() + event click
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
-    console.log(isGroup)
+    // console.log(isGroup)
 
     // create head-img
     $('.custom-img-head').html(`
