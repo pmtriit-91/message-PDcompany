@@ -94,9 +94,12 @@ socket.on('connect', () => {
 // CHAT 1-1
 // get list friends
 //send mess 1-1
+let currentFriend = null
+let currentNewChatDiv = null
 function sendMessagePrivate(friendID, friend, newChatDiv) {
     const messageContent = messageInput.value.trim()
-    // console.log('check friendID :', friendID)
+    console.log('check friendID :', friendID)
+    console.log('friend :', friend)
 
     if (messageContent) {
         const info = {
@@ -107,7 +110,9 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
         }
 
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            data && addMessPrivate(data.msg, newChatDiv, friend, true)
+            console.log(data)
+            if (Number(data.msg.receiverid) === Number(friendID))
+                addMessPrivate(data.msg, newChatDiv, friend, true, false)
         })
 
         // Reset the input field
@@ -124,7 +129,7 @@ const handleRenderCardFriend = (friendData) => {
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
         const newChatDiv = $("<div>")
-            .addClass(`wrapper-private-chat`)
+            .addClass(`wrapper-private-chat-${friend.id}`)
             .css({
                 'flex': '1',
                 'padding-left': '20px',
@@ -141,30 +146,9 @@ const handleRenderCardFriend = (friendData) => {
 
         cardFriend.addEventListener('click', () => {
             isGroup = false
+            currentFriend = friend
+            currentNewChatDiv = newChatDiv
             // console.log('isGroup: ', false)
-
-            //send mess 1-1
-            // add click and keypress event outside the loop
-            sendMessageButton.addEventListener('click', () => {
-                if (!isGroup) {
-                    const activeCard = document.querySelector('.card-friend.active')
-                    if (activeCard) {
-                        const friendID = activeCard.id.split('-')[1]
-                        sendMessagePrivate(friendID, friend, newChatDiv)
-                    }
-                }
-            })
-
-            messageInput.addEventListener('keypress', (event) => {
-                if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault()
-                    const activeCard = document.querySelector('.card-friend.active')
-                    if (activeCard) {
-                        const friendID = activeCard.id.split('-')[1]
-                        sendMessagePrivate(friendID, friend, newChatDiv)
-                    }
-                }
-            })
 
             //action switch headCardImg
             headCardImg.html(`
@@ -176,11 +160,11 @@ const handleRenderCardFriend = (friendData) => {
 
             //action hide/show wrapper-private-chat
             arrayPrivate.forEach(nodeElm => {
-                nodeElm != newChatDiv ? nodeElm.hide() : nodeElm.show()
+                nodeElm != currentNewChatDiv ? nodeElm.hide() : nodeElm.show()
             })
 
-            $("#wrapper-chat").after(newChatDiv)
-            arrayPrivate.push(newChatDiv)
+            $("#wrapper-chat").after(currentNewChatDiv)
+            arrayPrivate.push(currentNewChatDiv)
 
             //xóa active va hide group
             groupSurecommand.classList.remove('active')
@@ -194,11 +178,32 @@ const handleRenderCardFriend = (friendData) => {
             // active
             cardFriend.classList.add('active')
 
-            getHistoryPrivate(friend, newChatDiv)
+            //send mess 1-1
+            // add click and keypress event outside the loop
+            sendMessageButton.addEventListener('click', () => {
+                if (!isGroup) {
+                    const activeCard = document.querySelector('.card-friend.active')
+                    if (activeCard) {
+                        const friendID = activeCard.id.split('-')[1]
+                        sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
+                    }
+                }
+            })
+            messageInput.addEventListener('keypress', (event) => {
+                if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault()
+                    const activeCard = document.querySelector('.card-friend.active')
+                    if (activeCard) {
+                        const friendID = activeCard.id.split('-')[1]
+                        sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
+                    }
+                }
+            })
+            // getHistoryPrivate(friend, newChatDiv)
         })
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
-            if (data && data.data) {
+            if (Number(data.data.senderid) === Number(friend.id)) {
                 addMessPrivate(data.data, newChatDiv, friend, false, false)
             }
         })
@@ -235,6 +240,7 @@ const getLastMessPrivate = (friend, newChatDiv) => {
 
                 //scrollTop event
                 let lastMessageId = data[0].id
+                getHistoryPrivate(friend, newChatDiv, lastMessageId, false)
                 newChatDiv.on('scroll', () => {
                     if (newChatDiv.scrollTop() === 0) {
                         isPrivateScrolling = true
@@ -296,6 +302,7 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 
 // add mess private UI
 const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling) => {
+    console.log(friend)
     //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
     $(document).ready(function () {
         $("#wrapper-chat").hide()
@@ -331,6 +338,8 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
+
+        console.log(newChatDiv)
 
         if (isPrivateScrolling) {
             newChatDiv.prepend(messageDiv)
@@ -400,7 +409,7 @@ groupSurecommand.addEventListener('click', () => {
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
     $(document).ready(function () {
         $("#wrapper-chat").show()
-        $("[class^='wrapper-private-chat']").hide()
+        $("[class^='wrapper-private-chat-']").hide()
     })
 
     //active
