@@ -93,6 +93,24 @@ socket.on('connect', () => {
 
 // CHAT 1-1
 // get list friends
+
+// //
+// const infoRead = {
+//     senderid: Number(dataUser.userID),
+//     receiverid: 1134
+// }
+// socket.emit('mark_as_read', infoRead, (err, data) => {
+//     console.log(data)
+// })
+// //đếm tin nhắn chưa đọc
+// const infoCount = {
+//     senderids: [1137, 2278],
+//     receiverid: 1134
+// }
+// socket.emit('get_unread_count', infoCount, (err, data) => {
+//     console.log(data)
+// })
+
 // lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
 let currentNewChatDiv = null
@@ -125,7 +143,6 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 
 const handleRenderCardFriend = (friendData) => {
     const arrayPrivate = []
-
     friendData.forEach((friend) => {
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
@@ -353,6 +370,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 //CHAT GROUP
 
 getHistoryMessagesGroup()
+getLastMessageGroup()
 
 // check new-mess
 const displayedMessages = []
@@ -439,9 +457,6 @@ function getHistoryMessagesGroup(id, isScrolling) {
                 if (isScrolling) {
                     // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
                     addMessageToChat(message.content, isCurrentUser, true, message)
-                    if (loadedMessageIDs.includes(message.id)) {
-
-                    }
                 } else {
                     // Nếu không cuộn, thêm tin nhắn vào dưới cùng
                     addMessageToChat(message.content, isCurrentUser, false, message)
