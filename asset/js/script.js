@@ -296,10 +296,10 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
                     loadedMessagePrivateIDs.push(message.id)
                     tempMessages.push(message)
                 }
-            });
+            })
 
             // Sắp xếp mảng tạm thời theo thời gian
-            tempMessages.sort((a, b) => a.timestamp - b.timestamp)
+            // tempMessages.sort((a, b) => {a.timestamp - b.timestamp})
 
             if (isPrivateScrolling) {
                 // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
@@ -328,7 +328,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
         var messageTextDiv = $("<div>").html(`
-          <p id="tooltip-time" class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
+          <p class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
         `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
@@ -338,12 +338,13 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
         const tooltipTime = timestampP.innerHTML = data && data.createdAt ?
             `${moment(data.createdAt).format('HH:mm')} ${moment(data.createdAt).format('MMM DD, YYYY')}` : ''
-        messageTextDiv[0].firstElementChild.setAttribute('data-template', `${tooltipTime}`)
+        // messageTextDiv[0].firstElementChild.setAttribute('data-template', `${tooltipTime}`)
+        messageTextDiv.find('p').attr('data-tooltip-time-private', tooltipTime)
 
         //tippy time
-        tippy('#tooltip-time', {
+        tippy('[data-tooltip-time-private]', {
             content(reference) {
-                return reference.getAttribute('data-template')
+                return reference.getAttribute('data-tooltip-time-private')
             },
             theme: 'material',
             animation: 'scale',
@@ -354,7 +355,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-        // console.log(newChatDiv)
+        console.log(newChatDiv)
         if (isPrivateScrolling) {
             newChatDiv.prepend(messageDiv)
             newChatDiv[0].scrollTop = newChatDiv[0].clientHeight
@@ -490,7 +491,7 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
 
     // create text content
     const messageTextDiv = document.createElement('div')
-    messageTextDiv.innerHTML = '<p id="tooltip-time" class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') + ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + content + '</p>'
+    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') + ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + content + '</p>'
 
     // create text time
     const timestampP = document.createElement('p')
@@ -500,12 +501,12 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
     const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
         `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
 
-    messageTextDiv.firstElementChild.setAttribute('data-template', `${tooltipTime}`)
+    messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
 
     //tippy time
-    tippy('#tooltip-time', {
+    tippy('[data-tooltip-time-group]', {
         content(reference) {
-            return reference.getAttribute('data-template')
+            return reference.getAttribute('data-tooltip-time-group')
         },
         theme: 'material',
         animation: 'scale',

@@ -112,6 +112,23 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+}
+
+.note-mess {
+    height: 20px;
+    width: 20px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-radius: 50%;
+    color: #E0F4FF;
+    background: #FF6C22;
+}
+
+.note-mess p {
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .custom-img-head {
