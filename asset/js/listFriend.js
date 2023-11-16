@@ -17,6 +17,7 @@ function getListFriends(token, dataUser, baseUrl, callback) {
     })
         .then(response => {
             const listFriends = [...response.data.members]
+            localStorage.setItem('dataFriends', JSON.stringify(listFriends))
             //mảng check index không trùng lặp
             const usedIndexes = []
             listFriends.map((friend) => {
@@ -40,9 +41,6 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                     <div class="row row-card-avatar g-0">
                         <div id="friend-img-${friend.id}" class="col-3 col-md-3 custom-img">
                             <img src="./asset/image/avatar${array[randomIndex]}.jpeg" class="img-fluid avatar-group" alt="...">
-                            <div class="note-mess">
-                                <p>12</p>
-                            </div>
                         </div>
                         <div class="col-9 col-md-9 d-flex align-items-center">
                             <div class="card-body">

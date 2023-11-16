@@ -115,7 +115,7 @@
     position: relative;
 }
 
-.note-mess {
+[class^="note-mess"] {
     height: 20px;
     width: 20px;
     position: absolute;
@@ -126,7 +126,7 @@
     background: #FF6C22;
 }
 
-.note-mess p {
+[class^="note-mess"] p {
     font-size: 12px;
     font-weight: 700;
 }

@@ -92,25 +92,40 @@ socket.on('connect', () => {
 })
 
 // CHAT 1-1
+
+//đếm tin nhắn chưa đọc
+const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
+const infoCount = {
+    senderids: senderids,
+    receiverid: Number(dataUser.userID)
+}
+socket.emit('get_unread_count', infoCount, (err, data) => {
+    data.forEach((elm) => {
+        if (senderids.includes(elm.senderid)) {
+            const friendImgDiv = $(`#friend-img-${elm.senderid}`)
+            const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
+            const noteMess = $('<p>').text(elm.unread)
+
+            friendImgDiv.append(noteMessDiv.append(noteMess))
+
+            //đánh dấu đã đọc tin nhắn
+            // //
+            const cardFriend = document.getElementById(`friend-${elm.senderid}`)
+            cardFriend.addEventListener('click', () => {
+                const infoRead = {
+                    senderid: Number(dataUser.userID),
+                    receiverid: 1137
+                }
+                socket.emit('mark_as_read', infoRead, (err, data) => {
+                    console.log(data)
+                    noteMessDiv.remove()
+                })
+            })
+
+        }
+    })
+})
 // get list friends
-
-// //
-// const infoRead = {
-//     senderid: Number(dataUser.userID),
-//     receiverid: 1134
-// }
-// socket.emit('mark_as_read', infoRead, (err, data) => {
-//     console.log(data)
-// })
-// //đếm tin nhắn chưa đọc
-// const infoCount = {
-//     senderids: [1137, 2278],
-//     receiverid: 1134
-// }
-// socket.emit('get_unread_count', infoCount, (err, data) => {
-//     console.log(data)
-// })
-
 // lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
 let currentNewChatDiv = null
@@ -143,7 +158,13 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 
 const handleRenderCardFriend = (friendData) => {
     const arrayPrivate = []
+    const arrayFriendID = []
+
     friendData.forEach((friend) => {
+        // mảng lưu friendID
+        arrayFriendID.push(friend.id)
+        localStorage.setItem('arrayFriendID', JSON.stringify(arrayFriendID))
+
         //create wrapper-private-chat
         const cardFriend = document.getElementById(`friend-${friend.id}`)
         const newChatDiv = $("<div>")
@@ -231,6 +252,7 @@ const handleRenderCardFriend = (friendData) => {
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
 
 //get last mess private
+// let previousLastMessageId = null
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
     socket.emit('load_last_mess', {
@@ -241,7 +263,6 @@ const getLastMessPrivate = (friend, newChatDiv) => {
             console.log(err)
         } else {
             console.log('lastMessPrivate', data)
-
             //add info sidebar left
             //time
             const time = data && data[0] ?
@@ -348,14 +369,14 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             },
             theme: 'material',
             animation: 'scale',
-            trigger: 'click'
+            // trigger: 'click'
         })
 
         // Thêm các thành phần vào messageDiv
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
         // Thêm messageDiv vào đầu wrapper-private-chat
-        console.log(newChatDiv)
+        // console.log(newChatDiv)
         if (isPrivateScrolling) {
             newChatDiv.prepend(messageDiv)
             newChatDiv[0].scrollTop = newChatDiv[0].clientHeight
@@ -510,7 +531,7 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
         },
         theme: 'material',
         animation: 'scale',
-        trigger: 'click'
+        // trigger: 'click'
     })
 
     //add DOM
