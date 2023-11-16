@@ -92,39 +92,6 @@ socket.on('connect', () => {
 })
 
 // CHAT 1-1
-
-//đếm tin nhắn chưa đọc
-const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
-const infoCount = {
-    senderids: senderids,
-    receiverid: Number(dataUser.userID)
-}
-socket.emit('get_unread_count', infoCount, (err, data) => {
-    data.forEach((elm) => {
-        if (senderids.includes(elm.senderid)) {
-            const friendImgDiv = $(`#friend-img-${elm.senderid}`)
-            const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
-            const noteMess = $('<p>').text(elm.unread)
-
-            friendImgDiv.append(noteMessDiv.append(noteMess))
-
-            //đánh dấu đã đọc tin nhắn
-            // //
-            const cardFriend = document.getElementById(`friend-${elm.senderid}`)
-            cardFriend.addEventListener('click', () => {
-                const infoRead = {
-                    senderid: Number(dataUser.userID),
-                    receiverid: 1137
-                }
-                socket.emit('mark_as_read', infoRead, (err, data) => {
-                    console.log(data)
-                    noteMessDiv.remove()
-                })
-            })
-
-        }
-    })
-})
 // get list friends
 // lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
@@ -242,8 +209,45 @@ const handleRenderCardFriend = (friendData) => {
         })
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
+            console.log('data', data)
             if (Number(data.data.senderid) === Number(friend.id)) {
-                addMessPrivate(data.data, newChatDiv, friend, false, false)
+                getLastMessPrivate(friend, newChatDiv)
+                // addMessPrivate(data.data, newChatDiv, friend, false, false)
+
+                //đếm tin nhắn chưa đọc
+                const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
+                const infoCount = {
+                    senderids: senderids,
+                    receiverid: Number(dataUser.userID)
+                }
+                socket.emit('get_unread_count', infoCount, (err, data) => {
+                    data.forEach((elm) => {
+                        if (senderids.includes(elm.senderid)) {
+                            const friendImgDiv = $(`#friend-img-${elm.senderid}`)
+                            const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
+                            const noteMess = $('<p>').text(elm.unread)
+
+                            friendImgDiv.append(noteMessDiv.append(noteMess))
+
+                            //đánh dấu đã đọc tin nhắn
+                            // //
+                            const cardFriend = document.getElementById(`friend-${elm.senderid}`)
+                            cardFriend.addEventListener('click', () => {
+                                const infoRead = {
+                                    senderid: Number(dataUser.userID),
+                                    receiverid: 1137
+                                }
+                                socket.emit('mark_as_read', infoRead, (err, data) => {
+                                    console.log(data)
+                                    noteMessDiv.remove()
+                                })
+                            })
+
+                        }
+                    })
+                })
+
+                localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
             }
         })
         activeCardFriends.push(cardFriend)
@@ -251,8 +255,14 @@ const handleRenderCardFriend = (friendData) => {
 }
 getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
 
+// const idPairs = []
+// function addToIdPairs(lastid, receiverid) {
+//     const pair = [lastid, receiverid]
+//     idPairs.push(pair)
+//     // console.log(idPairs)
+//     localStorage.setItem('arraylastIdAndFriendId', JSON.stringify(idPairs))
+// }
 //get last mess private
-// let previousLastMessageId = null
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
     socket.emit('load_last_mess', {
@@ -279,6 +289,8 @@ const getLastMessPrivate = (friend, newChatDiv) => {
 
                 //scrollTop event
                 let lastMessageId = data[0].id
+                // let receiverid = data[0].receiverid
+                // addToIdPairs(lastMessageId, receiverid)
                 getHistoryPrivate(friend, newChatDiv, lastMessageId, false)
                 newChatDiv.on('scroll', () => {
                     if (newChatDiv.scrollTop() === 0) {
