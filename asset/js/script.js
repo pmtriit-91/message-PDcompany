@@ -131,8 +131,8 @@ let currentNewChatDiv = null
 //send mess 1-1
 function sendMessagePrivate(friendID, friend, newChatDiv) {
     const messageContent = messageInput.value.trim()
-    console.log('check friendID :', friendID)
-    console.log('friend :', friend)
+    // console.log('check friendID :', friendID)
+    // console.log('friend :', friend)
 
     if (messageContent) {
         const info = {
@@ -146,6 +146,8 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
             console.log(data)
             if (Number(data.msg.receiverid) === Number(friendID)) {
                 addMessPrivate(data.msg, newChatDiv, friend, true, false)
+
+                //show lastmess card-friend
                 const timeString = data.msg.send_timestamp
                 const time = data.msg ?
                     moment(timeString).format("HH:mm MMM DD, YYYY") : ''
@@ -157,24 +159,22 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
                     $(`#card-text-${friendID}`).text(friend.f_name + ': ' + data.msg.message)
                 }
             }
-            // console.log(senderids.includes(Number(data.msg.receiverid)))
-            // if (senderids.includes(Number(data.msg.receiverid))) {
-            //     //đánh dấu đã đọc tin nhắn
-            //     //
-            //     const noteMessDiv = document.getElementsByClassName(`note-mess-${Number(data.msg.receiverid)}`)
-            //     console.log(noteMessDiv)
-            //     const cardFriend = document.getElementById(`friend-${Number(data.msg.receiverid)}`)
-            //     cardFriend.addEventListener('click', () => {
-            //         const infoRead = {
-            //             senderid: Number(dataUser.userID),
-            //             receiverid: Number(data.msg.receiverid)
-            //         }
-            //         socket.emit('mark_as_read', infoRead, (err, data) => {
-            //             console.log(data)
-            //             noteMessDiv.remove()
-            //         })
-            //     })
-            // }
+
+            //remove notemess after send
+            const receiverid = Number(data.msg.receiverid)
+            if (senderids.includes(Number(receiverid))) {
+                const noteMessDiv = $(`.note-mess-${receiverid}`)
+
+                if (noteMessDiv) {
+                    const infoRead = {
+                        senderid: Number(dataUser.userID),
+                        receiverid: receiverid
+                    }
+                    socket.emit('mark_as_read', infoRead, (err, data) => {
+                        noteMessDiv.remove()
+                    })
+                }
+            }
         })
 
         // Reset the input field
