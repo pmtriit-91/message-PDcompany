@@ -92,6 +92,38 @@ socket.on('connect', () => {
 })
 
 // CHAT 1-1
+//đếm tin nhắn chưa đọc
+const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
+const infoCount = {
+    senderids: senderids,
+    receiverid: Number(dataUser.userID)
+}
+socket.emit('get_unread_count', infoCount, (err, data) => {
+    data.forEach((elm) => {
+        if (senderids.includes(elm.senderid)) {
+            const friendImgDiv = $(`#friend-img-${elm.senderid}`)
+            const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
+            const noteMess = $('<p>').text(elm.unread)
+
+            friendImgDiv.append(noteMessDiv.append(noteMess))
+
+            //đánh dấu đã đọc tin nhắn
+            // //
+            const cardFriend = document.getElementById(`friend-${elm.senderid}`)
+            cardFriend.addEventListener('click', () => {
+                const infoRead = {
+                    senderid: Number(dataUser.userID),
+                    receiverid: elm.senderid
+                }
+                socket.emit('mark_as_read', infoRead, (err, data) => {
+                    console.log(data)
+                    noteMessDiv.remove()
+                })
+            })
+
+        }
+    })
+})
 // get list friends
 // lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
@@ -112,8 +144,37 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
             console.log(data)
-            if (Number(data.msg.receiverid) === Number(friendID))
+            if (Number(data.msg.receiverid) === Number(friendID)) {
                 addMessPrivate(data.msg, newChatDiv, friend, true, false)
+                const timeString = data.msg.send_timestamp
+                const time = data.msg ?
+                    moment(timeString).format("HH:mm MMM DD, YYYY") : ''
+                document.getElementById(`card-time-${friendID}`).innerHTML = time
+
+                if (Number(data.msg.senderid) === Number(dataUser.userID)) {
+                    $(`#card-text-${friendID}`).text('you: ' + data.msg.message)
+                } else {
+                    $(`#card-text-${friendID}`).text(friend.f_name + ': ' + data.msg.message)
+                }
+            }
+            // console.log(senderids.includes(Number(data.msg.receiverid)))
+            // if (senderids.includes(Number(data.msg.receiverid))) {
+            //     //đánh dấu đã đọc tin nhắn
+            //     //
+            //     const noteMessDiv = document.getElementsByClassName(`note-mess-${Number(data.msg.receiverid)}`)
+            //     console.log(noteMessDiv)
+            //     const cardFriend = document.getElementById(`friend-${Number(data.msg.receiverid)}`)
+            //     cardFriend.addEventListener('click', () => {
+            //         const infoRead = {
+            //             senderid: Number(dataUser.userID),
+            //             receiverid: Number(data.msg.receiverid)
+            //         }
+            //         socket.emit('mark_as_read', infoRead, (err, data) => {
+            //             console.log(data)
+            //             noteMessDiv.remove()
+            //         })
+            //     })
+            // }
         })
 
         // Reset the input field
@@ -171,6 +232,10 @@ const handleRenderCardFriend = (friendData) => {
 
             $("#wrapper-chat").after(currentNewChatDiv)
             arrayPrivate.push(currentNewChatDiv)
+            // Scroll về cuối cùng của newChatDiv
+            const scrollHeight = currentNewChatDiv[0].scrollHeight
+            const clientHeight = currentNewChatDiv[0].clientHeight
+            currentNewChatDiv[0].scrollTop = scrollHeight
 
             //xóa active va hide group
             groupSurecommand.classList.remove('active')
@@ -211,8 +276,26 @@ const handleRenderCardFriend = (friendData) => {
         socket.on("socket_result", (data) => {
             console.log('data', data)
             if (Number(data.data.senderid) === Number(friend.id)) {
-                getLastMessPrivate(friend, newChatDiv)
-                // addMessPrivate(data.data, newChatDiv, friend, false, false)
+                // getLastMessPrivate(friend, newChatDiv)
+                addMessPrivate(data.data, newChatDiv, friend, false, false)
+
+                //show lastmess card-friend
+                socket.emit('load_last_mess', {
+                    senderid: friend.id, // friend.id
+                    receiverid: Number(dataUser.userID) //userId
+                }, (err, data) => {
+                    console.log(data)
+                    const timeString = data[0].send_timestamp
+                    const time = data[0] && data[0].send_timestamp ?
+                        moment(timeString).format("HH:mm MMM DD, YYYY") : ''
+                    document.getElementById(`card-time-${friend.id}`).innerHTML = time
+
+                    if (Number(data[0].senderid) === Number(dataUser.userID)) {
+                        $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
+                    } else {
+                        $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
+                    }
+                })
 
                 //đếm tin nhắn chưa đọc
                 const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
@@ -235,10 +318,9 @@ const handleRenderCardFriend = (friendData) => {
                             cardFriend.addEventListener('click', () => {
                                 const infoRead = {
                                     senderid: Number(dataUser.userID),
-                                    receiverid: 1137
+                                    receiverid: elm.senderid
                                 }
                                 socket.emit('mark_as_read', infoRead, (err, data) => {
-                                    console.log(data)
                                     noteMessDiv.remove()
                                 })
                             })
