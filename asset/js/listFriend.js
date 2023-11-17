@@ -43,10 +43,17 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                             <img src="./asset/image/avatar${array[randomIndex]}.jpeg" class="img-fluid avatar-group" alt="...">
                         </div>
                         <div class="col-9 col-md-9 d-flex align-items-center">
-                            <div class="card-body">
+                            <div class="card-body" id="card-body-${friend.id}">
                                 <h5 class="card-title">${friend.f_name}</h5>
                                 <p class="card-text card-text-sub"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
-                                <p class="card-text card-text-sub"><small id="card-time-${friend.id}" class="text-body-secondary">time</small></p>
+                                <p class="card-text card-text-sub"><small id="card-time-${friend.id}" class="text-body-secondary text-time">time</small></p>
+                                <div class="chat-bubble">
+                                    <div class="typing">
+                                        <div class="dot"></div>
+                                        <div class="dot"></div>
+                                        <div class="dot"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

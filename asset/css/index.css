@@ -24,6 +24,7 @@
 
 .body .card .row.row-card-avatar {
     padding: 10px 0;
+    padding-right: 20px;
 }
 
 .wrapper-head {
@@ -75,15 +76,19 @@
     padding: 0;
     border: none;
     cursor: pointer;
+    /* border-top-right-radius: 0;
+    border-bottom-right-radius: 0; */
 }
 
 .body .card.active {
     background-color: rgba(205, 196, 249, 0.2);
+    /* background-color: #ECF2FF; */
     transition: all 0.2s ease-out;
 }
 
 .body .card:hover {
     background-color: rgba(205, 196, 249, 0.2);
+    /* background-color: #ECF2FF; */
     transition: all 0.2s ease-out;
 }
 
@@ -92,10 +97,17 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .custom-img-head {
     cursor: pointer;
+}
+
+.card-friend {
+    justify-content: center;
 }
 
 .card-head-custom {
@@ -132,6 +144,7 @@
 }
 
 .custom-img-head {
+    flex: 1;
     justify-content: flex-start;
     padding-left: 6px;
 }
@@ -149,7 +162,17 @@
 }
 
 .card-text-sub {
+    width: 100%;
     margin-bottom: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.text-time {
+    font-size: 12px;
+    color: green !important;
+    opacity: 64%;
 }
 
 /* right */
@@ -180,7 +203,12 @@
     padding-left: 20px;
     padding-right: 20px;
     overflow-y: scroll;
-    background-color: #ECF2FF;
+    background: #536976;
+    /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #292E49, #536976);
+    /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #292E49, #536976);
+    /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
 }
 
 .input-custom {
@@ -197,6 +225,7 @@
 
 .button-logout {
     padding: 0 10px;
+    position: relative;
 }
 
 .wrap-send {
@@ -224,12 +253,85 @@
 }
 
 /* wrapper-private-chat */
+[class^="wrapper-private-chat"] {
+    background: #00416A;
+    /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #969696, #00416A);
+    /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #969696, #00416A);
+    /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
 [class^="wrapper-private-chat"] .wrap-user {
     position: relative;
     padding: 10px 0;
 }
 
 /* wrapper-private-chat */
+
+/* typing */
+.chat-bubble {
+    background-color: #E6F8F1;
+    padding: 2px 9px;
+    -webkit-border-radius: 20px;
+    /* -webkit-border-bottom-left-radius: 2px; */
+    -moz-border-radius: 20px;
+    /* -moz-border-radius-bottomleft: 2px; */
+    border-radius: 20px;
+    /* border-bottom-left-radius: 2px; */
+    /* display: inline-block; */
+    display: none;
+}
+
+.typing {
+    align-items: center;
+    display: flex;
+    height: 17px;
+}
+
+.typing .dot {
+    animation: mercuryTypingAnimation 1.8s infinite ease-in-out;
+    background-color: #6CAD96;
+    border-radius: 50%;
+    height: 7px;
+    margin-right: 4px;
+    vertical-align: middle;
+    width: 7px;
+    display: inline-block;
+}
+
+.typing .dot:nth-child(1) {
+    animation-delay: 200ms;
+}
+
+.typing .dot:nth-child(2) {
+    animation-delay: 300ms;
+}
+
+.typing .dot:nth-child(3) {
+    animation-delay: 400ms;
+}
+
+.typing .dot:last-child {
+    margin-right: 0;
+}
+
+@keyframes mercuryTypingAnimation {
+    0% {
+        transform: translateY(0px);
+        background-color: #6CAD96;
+    }
+
+    28% {
+        transform: translateY(-7px);
+        background-color: #9ECAB9;
+    }
+
+    44% {
+        transform: translateY(0px);
+        background-color: #B5D9CB;
+    }
+}
 
 /* screen */
 @media (min-width: 320px) {

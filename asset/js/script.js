@@ -202,7 +202,6 @@ const handleRenderCardFriend = (friendData) => {
                 'padding-left': '20px',
                 'padding-right': '20px',
                 'overflow-y': 'scroll',
-                'background-color': '#ECF2FF',
             })
 
         //get lastInfo chat 1-1
@@ -216,6 +215,34 @@ const handleRenderCardFriend = (friendData) => {
             currentFriend = friend
             currentNewChatDiv = newChatDiv
             // console.log('isGroup: ', false)
+
+            //debounce input
+            function debounce(func, delay) {
+                let timer
+                return function (...args) {
+                    const context = this
+                    clearTimeout(timer)
+                    timer = setTimeout(() => {
+                        func.apply(context, args)
+                    }, delay)
+                }
+            }
+
+            // Sử dụng debounce function
+            const debounceTypingEvent = debounce((event, friend, dataUser, socket) => {
+                const inputValue = event.target.value
+                const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+                if (inputValue.length > 0) {
+                    socket.emit('chat_typing', info)
+                } else {
+                    socket.emit('chat_clear_typing', info)
+                }
+            }, 300)
+
+            // Gọi hàm debounce khi sự kiện input xảy ra trên messageInput
+            messageInput.addEventListener('input', (event) => {
+                debounceTypingEvent(event, friend, dataUser, socket)
+            })
 
             //action switch headCardImg
             headCardImg.html(`
@@ -331,6 +358,18 @@ const handleRenderCardFriend = (friendData) => {
 
                 localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
             }
+
+            //typing
+            const cardBody = $(`#card-body-${friend.id}`)
+            const chatBubble = cardBody.find('.chat-bubble')
+            if (data.key === "chat_typing") {
+                // Xóa tất cả các phần tử <p> có trong card-body
+                cardBody.find('p').hide()
+                chatBubble.show()
+            } else {
+                cardBody.find('p').show()
+                chatBubble.hide()
+            }
         })
         activeCardFriends.push(cardFriend)
     })
@@ -443,7 +482,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
         var messageTextDiv = $("<div>").html(`
-          <p class="small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
+          <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
         `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
@@ -685,4 +724,12 @@ messageInput.addEventListener('keypress', (event) => {
             sendMessage()
         }
     }
+})
+
+//tippy Louout
+tippy('.button-logout', {
+    content: 'Logout',
+    theme: 'material',
+    animation: 'scale',
+    // trigger: 'click'
 })
