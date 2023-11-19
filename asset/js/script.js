@@ -1,7 +1,7 @@
 import { randomAvatarURL, randomName } from './randomName.js'
 import getListFriends from './listFriend.js'
 
-console.log = function () { }
+// console.log = function () { }
 
 const chatWrapper = document.querySelector('.wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
@@ -230,6 +230,7 @@ const handleRenderCardFriend = (friendData) => {
                 }
             }
 
+            let typingTimer
             // Sử dụng debounce function
             const debounceTypingEvent = debounce((event) => {
                 const inputValue = event.target.value
@@ -240,11 +241,23 @@ const handleRenderCardFriend = (friendData) => {
                 } else {
                     socket.emit('chat_clear_typing', info)
                 }
-            }, 300)
+            }, 1200)
 
-            // Gọi hàm debounce khi sự kiện input xảy ra trên messageInput
-            messageInput.addEventListener('input', (event) => {
+            // Hàm để xử lý khi người dùng gõ tin nhắn
+            const handleTyping = (event) => {
+                clearTimeout(typingTimer) // Xóa hẹn giờ trước đó (nếu có)
+
+                typingTimer = setTimeout(() => {
+                    const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+                    socket.emit('chat_clear_typing', info)
+                }, 10000)
+
                 debounceTypingEvent(event)
+            }
+
+            //sự kiện input xảy ra trên messageInput
+            messageInput.addEventListener('input', (event) => {
+                handleTyping(event)
             })
 
             //action switch headCardImg
@@ -304,7 +317,7 @@ const handleRenderCardFriend = (friendData) => {
         })
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
-            console.log('data', data)
+            console.log('data event socket_result', data)
             if (data.key === "chat_new_message" && Number(data.data.senderid) === Number(friend.id)) {
                 // getLastMessPrivate(friend, newChatDiv)
                 addMessPrivate(data.data, newChatDiv, friend, false, false)
@@ -364,7 +377,7 @@ const handleRenderCardFriend = (friendData) => {
             const cardBody = $(`#card-body-${data.data.senderid}`)
             const chatBubble = cardBody.find('.chat-bubble')
             if (data.key === "chat_typing") {
-                // Xóa tất cả các phần tử <p> có trong card-body
+                // ẩn tất cả các phần tử <p> có trong card-body
                 cardBody.find('p').hide()
                 chatBubble.show()
             } else {
@@ -398,7 +411,7 @@ const getLastMessPrivate = (friend, newChatDiv) => {
             //add info sidebar left
             //time
             const time = data && data[0] ?
-                `${moment(data[0].timestamp).format('HH:mm')} ${moment(data[0].timestamp).format('MMM DD, YYYY')}` : ''
+                `${moment(data[0].send_timestamp).format('HH:mm')} ${moment(data[0].send_timestamp).format('MMM DD, YYYY')}` : ''
             document.getElementById(`card-time-${friend.id}`).innerHTML = time
 
             //last mess
