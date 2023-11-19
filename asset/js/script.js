@@ -1,6 +1,8 @@
 import { randomAvatarURL, randomName } from './randomName.js'
 import getListFriends from './listFriend.js'
 
+console.log = function () { }
+
 const chatWrapper = document.querySelector('.wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
 
@@ -229,8 +231,9 @@ const handleRenderCardFriend = (friendData) => {
             }
 
             // Sử dụng debounce function
-            const debounceTypingEvent = debounce((event, friend, dataUser, socket) => {
+            const debounceTypingEvent = debounce((event) => {
                 const inputValue = event.target.value
+                console.log(inputValue)
                 const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
                 if (inputValue.length > 0) {
                     socket.emit('chat_typing', info)
@@ -241,7 +244,7 @@ const handleRenderCardFriend = (friendData) => {
 
             // Gọi hàm debounce khi sự kiện input xảy ra trên messageInput
             messageInput.addEventListener('input', (event) => {
-                debounceTypingEvent(event, friend, dataUser, socket)
+                debounceTypingEvent(event)
             })
 
             //action switch headCardImg
@@ -302,7 +305,7 @@ const handleRenderCardFriend = (friendData) => {
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
             console.log('data', data)
-            if (Number(data.data.senderid) === Number(friend.id)) {
+            if (data.key === "chat_new_message" && Number(data.data.senderid) === Number(friend.id)) {
                 // getLastMessPrivate(friend, newChatDiv)
                 addMessPrivate(data.data, newChatDiv, friend, false, false)
 
@@ -311,7 +314,6 @@ const handleRenderCardFriend = (friendData) => {
                     senderid: friend.id, // friend.id
                     receiverid: Number(dataUser.userID) //userId
                 }, (err, data) => {
-                    console.log(data)
                     const timeString = data[0].send_timestamp
                     const time = data[0] && data[0].send_timestamp ?
                         moment(timeString).format("HH:mm MMM DD, YYYY") : ''
@@ -355,12 +357,11 @@ const handleRenderCardFriend = (friendData) => {
                         }
                     })
                 })
-
                 localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
             }
 
             //typing
-            const cardBody = $(`#card-body-${friend.id}`)
+            const cardBody = $(`#card-body-${data.data.senderid}`)
             const chatBubble = cardBody.find('.chat-bubble')
             if (data.key === "chat_typing") {
                 // Xóa tất cả các phần tử <p> có trong card-body
