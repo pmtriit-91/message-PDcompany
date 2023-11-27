@@ -670,14 +670,11 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
 
     const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
         `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
-
-    messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
+    // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
 
     //tippy time
-    tippy('[data-tooltip-time-group]', {
-        content(reference) {
-            return reference.getAttribute('data-tooltip-time-group')
-        },
+    tippy(messageTextDiv, {
+        content: tooltipTime,
         theme: 'material',
         animation: 'scale',
         // trigger: 'click'
