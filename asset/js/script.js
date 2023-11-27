@@ -495,32 +495,32 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
-        var messageTextDiv = $("<div>").html(`
-          <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
-        `)
+        var messageTextDiv = $("<div>")
+            .html(`
+                <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
+            `)
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // create text time
         const timestampP = document.createElement('p')
         timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
 
-        const tooltipTime = timestampP.innerHTML = data && data.createdAt ?
-            `${moment(data.createdAt).format('HH:mm')} ${moment(data.createdAt).format('MMM DD, YYYY')}` : ''
-        // messageTextDiv[0].firstElementChild.setAttribute('data-template', `${tooltipTime}`)
+        const tooltipTime = timestampP.innerHTML = data && data.send_timestamp ?
+            `${moment(data.send_timestamp).format('HH:mm')} ${moment(data.send_timestamp).format('MMM DD, YYYY')}` : ''
         messageTextDiv.find('p').attr('data-tooltip-time-private', tooltipTime)
-
-        //tippy time
-        tippy('[data-tooltip-time-private]', {
-            content(reference) {
-                return reference.getAttribute('data-tooltip-time-private')
-            },
-            theme: 'material',
-            animation: 'scale',
-            // trigger: 'click'
-        })
 
         // Thêm các thành phần vào messageDiv
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
+
+        //tippy time
+        tippy(messageTextDiv[0], {
+            content: tooltipTime,
+            theme: 'material',
+            animation: 'scale',
+            allowHTML: false,
+            // trigger: 'click'
+        })
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         // console.log(newChatDiv)
@@ -559,18 +559,20 @@ function getLastMessageGroup() {
         if (err) {
             console.log(err)
         } else {
-            let lastMessageId = res.Messages.id
-            // if (!loadedMessageIDs.includes(++lastMessageId)) {
-            //     loadedMessageIDs.push(lastMessageId)
-            //     // getHistoryMessagesGroup(lastMessageId)
-            // }
-            chatWrapper.addEventListener('scroll', () => {
-                if (chatWrapper.scrollTop === 0) {
-                    isScrolling = true
-                    lastMessageId = Math.max(0, lastMessageId - 10)
-                    getHistoryMessagesGroup(lastMessageId, isScrolling)
-                }
-            })
+            if (res.length > 0) {
+                let lastMessageId = res.Messages.id
+                // if (!loadedMessageIDs.includes(++lastMessageId)) {
+                //     loadedMessageIDs.push(lastMessageId)
+                //     // getHistoryMessagesGroup(lastMessageId)
+                // }
+                chatWrapper.addEventListener('scroll', () => {
+                    if (chatWrapper.scrollTop === 0) {
+                        isScrolling = true
+                        lastMessageId = Math.max(0, lastMessageId - 10)
+                        getHistoryMessagesGroup(lastMessageId, isScrolling)
+                    }
+                })
+            }
         }
     })
 }

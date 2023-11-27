@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
 form.addEventListener("submit", function (event) {
     event.preventDefault()
 
-    // get value
+    // get values
     const emailValue = emailInput.value
     const passwordValue = passwordInput.value
 
