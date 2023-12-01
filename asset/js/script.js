@@ -38,7 +38,8 @@ let isGroup = true
 const activeCardFriends = []
 
 // baseUrl
-const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
+const baseUrl = 'https://node.surecommand.com/'
+const urlFullInfo = 'https://www.surecommand.com/mobileapp/android.php'
 document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
         window.location = '/login.html'
@@ -49,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     //get full user
-    axios.post(baseUrl, {
+    axios.post(urlFullInfo, {
         "head": {
             "code": 126,
             "cID": 3322,
@@ -72,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 //event socket
-var socket = io.connect('https://node.surecommand.com/', {
+var socket = io.connect(baseUrl, {
     query: {
         user: JSON.stringify({
             userID: Number(dataUser.userID),
@@ -92,6 +93,42 @@ var socket = io.connect('https://node.surecommand.com/', {
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 })
+
+//up image
+function uploadFile(file, friend, newChatDiv) {
+    const data = new FormData()
+    data.append('mediaSendInfo', JSON.stringify({
+        userID: dataUser.userID,
+        cid: dataUser.cid,
+        receiverId: friend.id
+    }))
+    data.append('images', file)
+
+    const xhr = new XMLHttpRequest()
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            console.log(JSON.parse(xhr.responseText))
+            const dataImage = JSON.parse(xhr.responseText)
+            if (xhr.status === 200) {
+                console.log('Upload thành công!')
+                const pathImage = dataImage.data.content.replace('public/', '')
+                const urlImage = baseUrl + pathImage
+                const type = dataImage.data.type
+                console.log(urlImage)
+                console.log(type)
+                console.log(newChatDiv)
+                console.log(friend)
+                addMessPrivate(urlImage, newChatDiv, friend, true, false, type)
+            } else {
+                console.error('Upload thất bại.')
+            }
+        }
+    }
+
+    xhr.open('POST', 'https://node.surecommand.com/media')
+    xhr.send(data)
+}
 
 // CHAT 1-1
 //đếm tin nhắn chưa đọc
@@ -216,7 +253,7 @@ const handleRenderCardFriend = (friendData) => {
             isGroup = false
             currentFriend = friend
             currentNewChatDiv = newChatDiv
-            // console.log('isGroup: ', false)
+            console.log('isGroup: ', isGroup)
 
             //debounce input
             function debounce(func, delay) {
@@ -314,6 +351,26 @@ const handleRenderCardFriend = (friendData) => {
                 }
             })
             // getHistoryPrivate(friend, newChatDiv)
+
+            //upload
+            document.getElementById('open-image-upload').addEventListener('mousedown', function () {
+                const fileUploader = document.getElementById('file-uploader')
+                if (fileUploader) {
+                    fileUploader.click()
+                    let changeEventActivated = false
+
+                    fileUploader.addEventListener('change', function () {
+                        if (!changeEventActivated) {
+                            changeEventActivated = true
+
+                            const file = fileUploader.files[0]
+                            console.log(file)
+                            uploadFile(file, friend, newChatDiv)
+                        }
+                    })
+                }
+            })
+
         })
         // // tra thong tin socket bên phía user nhận
         socket.on("socket_result", (data) => {
@@ -388,7 +445,7 @@ const handleRenderCardFriend = (friendData) => {
         activeCardFriends.push(cardFriend)
     })
 }
-getListFriends(token, dataUser, baseUrl, handleRenderCardFriend)
+getListFriends(token, dataUser, urlFullInfo, handleRenderCardFriend)
 
 // const idPairs = []
 // function addToIdPairs(lastid, receiverid) {
@@ -487,19 +544,17 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 }
 
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling) => {
-    // console.log('data ', data)
-    // console.log('friend ', friend)
-    //xoá wrapper-chat, tạo ra wrapper-private-chat và đổ dữ liệu
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, type) => {
     $(document).ready(function () {
         var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
         var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
 
         var messageTextDiv = $("<div>")
-            .html(`
-                <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
-                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>
-            `)
+            .html(type !== 'image' ? `<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+            ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>` :
+                `<img src="${data}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+            ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}"></img>`
+            )
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // create text time
@@ -580,7 +635,7 @@ function getLastMessageGroup() {
 // getLastMessageGroup() + event click
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
-    // console.log(isGroup)
+    console.log(isGroup)
 
     // create head-img
     $('.custom-img-head').html(`

@@ -267,6 +267,12 @@
     padding: 10px 0;
 }
 
+.image-wait {
+    width: 90px;
+    height: auto;
+    object-fit: contain;
+}
+
 /* wrapper-private-chat */
 
 /* typing */

@@ -95,14 +95,14 @@
                                 alt="avatar 1" class="avatar-chat">
                             <input id="message-input" type="text" class="form-control form-control-md input-custom"
                                 id="exampleFormControlInput2" placeholder="Type message">
-                            <a class="ms-1 text-muted" href="#!" id="open-image-upload"><i
+                            <a class="ms-1 text-muted" href="#!" id="open-image-upload" type="file"><i
                                     class="fas fa-paperclip"></i></a>
                             <a class="ms-3 text-muted" href="#!" id="wrap-emoji">
                                 <i class="fas fa-smile icon-emoji">
                                 </i>
                             </a>
                             <a class="ms-3" href="#!" id="send-button"><i class="fas fa-paper-plane"></i></a>
-                            <input type="file" id="image-upload" style="display: none;">
+                            <input type="file" id="file-uploader" style="display: none;">
                         </div>
                         <emoji-picker id="emoji" class="light"></emoji-picker>
                     </div>
@@ -127,7 +127,7 @@
     <script src="https://unpkg.com/tippy.js@6"></script>
     <!-- script -->
     <script type="module" src="./asset/js/emoji.js"></script>
-    <script type="module" src="./asset/js/script.js"></script>
+    <script type="module" src="./asset/js/script.js" defer></script>
 </body>
 
 </html>
