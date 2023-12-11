@@ -112,14 +112,37 @@ function uploadFile(file, friend, newChatDiv) {
             const dataImage = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
                 console.log('Upload thành công!')
+                console.log('dataImage', dataImage)
                 const pathImage = dataImage.data.content.replace('public/', '')
                 const urlImage = baseUrl + pathImage
                 const type = dataImage.data.type
+                const mediaID = dataImage.data.id
                 console.log(urlImage)
-                console.log(type)
-                console.log(newChatDiv)
-                console.log(friend)
-                addMessPrivate(urlImage, newChatDiv, friend, true, false, type)
+                addMessPrivate(pathImage, newChatDiv, friend, true, false, type)
+
+                //del image
+                $(document).on('click', '.btn-del-image', function () {
+                    const imageWrapper = $(this).closest('.container-image')
+                    imageWrapper.remove()
+
+                    //remove event click btn-del
+                    $(document).off('click', '.btn-del-image')
+                })
+                //////////////
+
+                //send image
+                sendMessageButton.addEventListener('click', () => {
+                    if (!isGroup) {
+                        const activeCard = document.querySelector('.card-friend.active')
+
+                        if (activeCard) {
+                            console.log(friend.id);
+                            sendMessagePrivate(friend.id, friend, newChatDiv, mediaID, pathImage, type)
+                        }
+                    }
+                })
+
+
             } else {
                 console.error('Upload thất bại.')
             }
@@ -130,7 +153,19 @@ function uploadFile(file, friend, newChatDiv) {
     xhr.send(data)
 }
 
-// CHAT 1-1
+// ***** CHAT 1-1 *****
+const unsentMessages = {}
+let currentFriendID = null
+
+function saveMessWhenSwitchToFriend(friendID) {
+    unsentMessages[currentFriendID] = messageInput.value
+    console.log('unsend :', unsentMessages)
+
+    messageInput.value = unsentMessages[friendID] || ''
+
+    currentFriendID = friendID
+}
+
 //đếm tin nhắn chưa đọc
 const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
 const infoCount = {
@@ -164,14 +199,12 @@ socket.emit('get_unread_count', infoCount, (err, data) => {
     })
 })
 // get list friends
-// lưu biến golbal cho các data friend và div của nó
 let currentFriend = null
 let currentNewChatDiv = null
 //send mess 1-1
-function sendMessagePrivate(friendID, friend, newChatDiv) {
+let isUploaded = false
+function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, type) {
     const messageContent = messageInput.value.trim()
-    // console.log('check friendID :', friendID)
-    // console.log('friend :', friend)
 
     if (messageContent) {
         const info = {
@@ -221,6 +254,25 @@ function sendMessagePrivate(friendID, friend, newChatDiv) {
 
         emoji.style.display = 'none'
     }
+
+    if (type === 'image') {
+        const info = {
+            "senderid": dataUser.userID,
+            "receiverid": friendID,
+            "cid": dataUser.cid,
+            "message": pathImage,
+            mediaID,
+            type
+        }
+        socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
+            console.log(data)
+            // addMessPrivate(friend, newChatDiv)
+            isUploaded = data.success
+            addMessPrivate(pathImage, newChatDiv, friend, true, false, type, isUploaded)
+            const imageWrapper = $('.btn-del-image').closest('.container-image')
+            imageWrapper.remove()
+        })
+    }
 }
 
 const handleRenderCardFriend = (friendData) => {
@@ -228,7 +280,6 @@ const handleRenderCardFriend = (friendData) => {
     const arrayFriendID = []
 
     friendData.forEach((friend) => {
-        // mảng lưu friendID
         arrayFriendID.push(friend.id)
         localStorage.setItem('arrayFriendID', JSON.stringify(arrayFriendID))
 
@@ -255,6 +306,9 @@ const handleRenderCardFriend = (friendData) => {
             currentNewChatDiv = newChatDiv
             console.log('isGroup: ', isGroup)
 
+            //call func save mess unsend
+            saveMessWhenSwitchToFriend(friend.id)
+
             //debounce input
             function debounce(func, delay) {
                 let timer
@@ -268,7 +322,7 @@ const handleRenderCardFriend = (friendData) => {
             }
 
             let typingTimer
-            // Sử dụng debounce function
+            //debounce typing
             const debounceTypingEvent = debounce((event) => {
                 const inputValue = event.target.value
                 console.log(inputValue)
@@ -280,9 +334,9 @@ const handleRenderCardFriend = (friendData) => {
                 }
             }, 1200)
 
-            // Hàm để xử lý khi người dùng gõ tin nhắn
+            // func typing
             const handleTyping = (event) => {
-                clearTimeout(typingTimer) // Xóa hẹn giờ trước đó (nếu có)
+                clearTimeout(typingTimer)
 
                 typingTimer = setTimeout(() => {
                     const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
@@ -292,7 +346,6 @@ const handleRenderCardFriend = (friendData) => {
                 debounceTypingEvent(event)
             }
 
-            //sự kiện input xảy ra trên messageInput
             messageInput.addEventListener('input', (event) => {
                 handleTyping(event)
             })
@@ -321,7 +374,6 @@ const handleRenderCardFriend = (friendData) => {
             groupSurecommand.classList.remove('active')
             $("#wrapper-chat").hide()
 
-            // Loại bỏ class "active" từ tất cả các card friend trước đó
             activeCardFriends.forEach(activeCard => {
                 activeCard.classList.remove('active')
             })
@@ -447,14 +499,6 @@ const handleRenderCardFriend = (friendData) => {
 }
 getListFriends(token, dataUser, urlFullInfo, handleRenderCardFriend)
 
-// const idPairs = []
-// function addToIdPairs(lastid, receiverid) {
-//     const pair = [lastid, receiverid]
-//     idPairs.push(pair)
-//     // console.log(idPairs)
-//     localStorage.setItem('arraylastIdAndFriendId', JSON.stringify(idPairs))
-// }
-//get last mess private
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
     socket.emit('load_last_mess', {
@@ -512,10 +556,7 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
         } else {
             console.log('dataPrivate ', dataPrivate)
 
-            // Tạo một mảng tạm thời để giữ tin nhắn theo thứ tự
             const tempMessages = []
-
-            // Lặp qua tin nhắn từ server và thêm vào mảng tạm thời
             dataPrivate.Messages.forEach(message => {
                 if (!loadedMessagePrivateIDs.includes(message.id)) {
                     loadedMessagePrivateIDs.push(message.id)
@@ -523,17 +564,12 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
                 }
             })
 
-            // Sắp xếp mảng tạm thời theo thời gian
-            // tempMessages.sort((a, b) => {a.timestamp - b.timestamp})
-
             if (isPrivateScrolling) {
-                // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
                 tempMessages.forEach(message => {
                     var isCurrentUser = Number(message.senderid) === Number(dataUser.userID)
                     addMessPrivate(message, newChatDiv, friend, isCurrentUser, true)
                 })
             } else {
-                // Nếu không cuộn, thêm tin nhắn vào dưới cùng
                 tempMessages.reverse().forEach(message => {
                     var isCurrentUser = Number(message.senderid) === Number(dataUser.userID)
                     addMessPrivate(message, newChatDiv, friend, isCurrentUser, false)
@@ -544,17 +580,47 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 }
 
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, type) => {
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, type, isUploaded) => {
     $(document).ready(function () {
-        var messageDiv = $("<div>").addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
-        var nameUser = $("<p>").addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
-
+        var messageDiv = $("<div>")
+        var nameUser = $("<p>")
         var messageTextDiv = $("<div>")
-            .html(type !== 'image' ? `<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
-            ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>` :
-                `<img src="${data}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
-            ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}"></img>`
-            )
+
+        if (type === 'image') {
+            const pathImage = data.replace('public/', '')
+            const urlImage = baseUrl + pathImage
+            messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
+            messageTextDiv.html(`<div class="wrap-image-wait">
+                <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
+                <img src="${urlImage}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                </img>
+            </div>`)
+        } else {
+            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+            nameUser.addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
+            messageTextDiv.html(`<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>`)
+        }
+
+        if (isUploaded) {
+            const pathImage = data.replace('public/', '')
+            const urlImage = baseUrl + pathImage
+            console.log(urlImage);
+
+            messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
+            messageTextDiv.html(`
+                <img src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                </img>`)
+        }
+
+        // var messageTextDiv = $("<div>")
+        //     .html(type !== 'image' ? `<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+        //     ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>` :
+        //         `<img src="${data}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+        //     ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}"></img>`
+        //     )
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // create text time
@@ -568,14 +634,19 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         // Thêm các thành phần vào messageDiv
         messageDiv.append(nameUser, !isCurrentUser && avatarImg, messageTextDiv)
 
-        //tippy time
-        tippy(messageTextDiv[0], {
+        //tippy
+        const tippyInstance = tippy(messageTextDiv[0], {
             content: tooltipTime,
             theme: 'material',
             animation: 'scale',
             allowHTML: false,
             // trigger: 'click'
         })
+
+        if (type == 'image') {
+            //disble tippy
+            tippyInstance.destroy()
+        }
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         // console.log(newChatDiv)

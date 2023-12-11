@@ -18,17 +18,14 @@ function getListFriends(token, dataUser, baseUrl, callback) {
         .then(response => {
             const listFriends = [...response.data.members]
             localStorage.setItem('dataFriends', JSON.stringify(listFriends))
-            //mảng check index không trùng lặp
             const usedIndexes = []
             listFriends.map((friend) => {
                 const array = [4, 5, 6]
-                // Tìm một chỉ số không trùng lặp
                 let randomIndex
                 do {
                     randomIndex = Math.floor(Math.random() * array.length)
                 } while (usedIndexes.includes(randomIndex))
 
-                // Thêm chỉ số vào mảng đã sử dụng
                 usedIndexes.push(randomIndex)
 
                 const newCard = document.createElement('div')
