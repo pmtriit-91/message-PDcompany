@@ -10,7 +10,9 @@ const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
 const buttonLogout = document.getElementsByClassName('button-logout')
 const emoji = document.getElementById('emoji')
+let currentUserSelected = {
 
+}
 //token
 const token = JSON.parse(localStorage.getItem('token'))
 const dataUser = JSON.parse(localStorage.getItem('dataUser'))
@@ -36,6 +38,10 @@ let isGroup = true
 
 //lưu mảng các cardFriend
 const activeCardFriends = []
+
+//
+let isUploaded = false
+let isUploadWaitImage = false
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
@@ -95,6 +101,18 @@ socket.on('connect', () => {
 })
 
 //up image
+let isImageSent = false
+function sendImageMessage(friend, newChatDiv, mediaID, pathImage, type) {
+    if (!isGroup) {
+        const activeCard = document.querySelector('.card-friend.active')
+        if (activeCard) {
+            sendMessagePrivate(friend.id, friend, newChatDiv, mediaID, pathImage, type)
+            isImageSent = true
+        } else {
+            console.log('loi up anh')
+        }
+    }
+}
 function uploadFile(file, friend, newChatDiv) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -117,8 +135,9 @@ function uploadFile(file, friend, newChatDiv) {
                 const urlImage = baseUrl + pathImage
                 const type = dataImage.data.type
                 const mediaID = dataImage.data.id
-                console.log(urlImage)
-                addMessPrivate(pathImage, newChatDiv, friend, true, false, type)
+                isUploadWaitImage = true
+                isUploaded = false
+                addMessPrivate(pathImage, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
@@ -127,22 +146,19 @@ function uploadFile(file, friend, newChatDiv) {
 
                     //remove event click btn-del
                     $(document).off('click', '.btn-del-image')
+
+                    sendMessageButton.removeEventListener('click', sendImage)
+                    isImageSent = false
                 })
-                //////////////
 
-                //send image
-                sendMessageButton.addEventListener('click', () => {
-                    if (!isGroup) {
-                        const activeCard = document.querySelector('.card-friend.active')
+                sendMessageButton.addEventListener('click', sendImage)
 
-                        if (activeCard) {
-                            console.log(friend.id);
-                            sendMessagePrivate(friend.id, friend, newChatDiv, mediaID, pathImage, type)
-                        }
+                // func send image
+                function sendImage() {
+                    if (!isImageSent) {
+                        sendImageMessage(friend, newChatDiv, mediaID, pathImage, type)
                     }
-                })
-
-
+                }
             } else {
                 console.error('Upload thất bại.')
             }
@@ -202,7 +218,6 @@ socket.emit('get_unread_count', infoCount, (err, data) => {
 let currentFriend = null
 let currentNewChatDiv = null
 //send mess 1-1
-let isUploaded = false
 function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, type) {
     const messageContent = messageInput.value.trim()
 
@@ -265,12 +280,11 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, ty
             type
         }
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            console.log(data)
-            // addMessPrivate(friend, newChatDiv)
             isUploaded = data.success
-            addMessPrivate(pathImage, newChatDiv, friend, true, false, type, isUploaded)
+            isUploadWaitImage = false
             const imageWrapper = $('.btn-del-image').closest('.container-image')
             imageWrapper.remove()
+            addMessPrivate(pathImage, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
         })
     }
 }
@@ -325,7 +339,6 @@ const handleRenderCardFriend = (friendData) => {
             //debounce typing
             const debounceTypingEvent = debounce((event) => {
                 const inputValue = event.target.value
-                console.log(inputValue)
                 const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
                 if (inputValue.length > 0) {
                     socket.emit('chat_typing', info)
@@ -402,23 +415,16 @@ const handleRenderCardFriend = (friendData) => {
                     }
                 }
             })
-            // getHistoryPrivate(friend, newChatDiv)
 
             //upload
-            document.getElementById('open-image-upload').addEventListener('mousedown', function () {
+            document.getElementById('open-image-upload').addEventListener('click', function () {
                 const fileUploader = document.getElementById('file-uploader')
                 if (fileUploader) {
                     fileUploader.click()
-                    let changeEventActivated = false
 
                     fileUploader.addEventListener('change', function () {
-                        if (!changeEventActivated) {
-                            changeEventActivated = true
-
-                            const file = fileUploader.files[0]
-                            console.log(file)
-                            uploadFile(file, friend, newChatDiv)
-                        }
+                        const file = fileUploader.files[0]
+                        uploadFile(file, friend, newChatDiv)
                     })
                 }
             })
@@ -580,15 +586,24 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 }
 
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, type, isUploaded) => {
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, isUploadWaitImage, isUploaded) => {
     $(document).ready(function () {
         var messageDiv = $("<div>")
         var nameUser = $("<p>")
         var messageTextDiv = $("<div>")
 
-        if (type === 'image') {
-            const pathImage = data.replace('public/', '')
+        if (!isUploadWaitImage && !isUploaded) {
+            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+            nameUser.addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
+            messageTextDiv.html(`<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>`)
+        }
+
+        if (isUploadWaitImage) {
+            const pathImage = data
             const urlImage = baseUrl + pathImage
+            console.log(urlImage)
+
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
             messageTextDiv.html(`<div class="wrap-image-wait">
                 <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
@@ -596,11 +611,6 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>
             </div>`)
-        } else {
-            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
-            nameUser.addClass("user-name").text(isCurrentUser ? "you" : friend.f_name)
-            messageTextDiv.html(`<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
-                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>`)
         }
 
         if (isUploaded) {
@@ -608,19 +618,25 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             const urlImage = baseUrl + pathImage
             console.log(urlImage);
 
-            messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
+            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
                 <img src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
         }
 
-        // var messageTextDiv = $("<div>")
-        //     .html(type !== 'image' ? `<p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
-        //     ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${data.message}</p>` :
-        //         `<img src="${data}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-        //     ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}"></img>`
-        //     )
+        if (data.type && data.type === 'image') {
+            const pathImage = data.message
+            const urlImage = baseUrl + pathImage
+
+            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+            messageTextDiv.html(`
+                <img src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                </img>`)
+        }
+
+
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
         // create text time
@@ -643,10 +659,10 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             // trigger: 'click'
         })
 
-        if (type == 'image') {
-            //disble tippy
-            tippyInstance.destroy()
-        }
+        // if (isUploadWaitImage) {
+        //     //disble tippy
+        //     tippyInstance.destroy()
+        // }
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         // console.log(newChatDiv)
@@ -741,30 +757,32 @@ function getHistoryMessagesGroup(id, isScrolling) {
         if (err) {
             console.log(err)
         } else {
-            console.log('history mess: ', res.Messages)
+            if (res) {
+                console.log('history mess: ', res.Messages)
 
-            //add history in DOM
-            const arrReverse = res.Messages.reverse()
-            const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
+                //add history in DOM
+                const arrReverse = res.Messages.reverse()
+                const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
 
-            newMessages.forEach(message => {
-                loadedMessageIDs.push(message.id)
-                var isCurrentUser = message.userID === Number(dataUser.userID)
+                newMessages.forEach(message => {
+                    loadedMessageIDs.push(message.id)
+                    var isCurrentUser = message.userID === Number(dataUser.userID)
 
-                if (isScrolling) {
-                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                    addMessageToChat(message.content, isCurrentUser, true, message)
-                } else {
-                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                    addMessageToChat(message.content, isCurrentUser, false, message)
-                }
-            })
+                    if (isScrolling) {
+                        // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                        addMessageToChat(message.message, isCurrentUser, true, message)
+                    } else {
+                        // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                        addMessageToChat(message.message, isCurrentUser, false, message)
+                    }
+                })
+            }
         }
     })
 }
 
 //add mess UI
-function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
+function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
@@ -787,7 +805,7 @@ function addMessageToChat(content, isCurrentUser, isScrolling, messageData) {
 
     // create text content
     const messageTextDiv = document.createElement('div')
-    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') + ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + content + '</p>'
+    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') + ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
 
     // create text time
     const timestampP = document.createElement('p')
