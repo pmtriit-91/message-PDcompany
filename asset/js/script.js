@@ -849,6 +849,7 @@ function closeModal() {
 const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, isUploadWaitImage, isUploaded) => {
     $(document).ready(function () {
         var messageDiv = $("<div>")
+        messageDiv.css("overflow-wrap", "anywhere")
         var nameUser = $("<p>")
         var messageTextDiv = $("<div>")
 
@@ -880,9 +881,24 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
-                <img src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                <img src=${urlImage} class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
+
+            // modal show fullsize image
+            const modal = document.createElement('div')
+            modal.classList.add('modal')
+            modal.innerHTML = `
+                <span id="close-image" class="close">&times;</span>
+                <img class="modal-content" id="img01">
+            `
+            document.body.appendChild(modal)
+            $(document).on('click', `.image-fullsize`, () => {
+                openModal(urlImage)
+            })
+            $(document).on('click', '#close-image', () => {
+                closeModal()
+            })
         }
 
         if (data.type && data.type === 'image') {
@@ -895,7 +911,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
 
-            // Tạo modal để hiển thị ảnh lớn
+            // modal show fullsize image
             const modal = document.createElement('div')
             modal.classList.add('modal')
             modal.innerHTML = `
@@ -933,10 +949,10 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             // trigger: 'click'
         })
 
-        // if (isUploadWaitImage) {
-        //     //disble tippy
-        //     tippyInstance.destroy()
-        // }
+        if (isUploadWaitImage || isUploaded) {
+            //disble tippy
+            tippyInstance.destroy()
+        }
 
         // Thêm messageDiv vào đầu wrapper-private-chat
         // console.log(newChatDiv)
@@ -1058,6 +1074,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
+    messageDiv.style.overflowWrap = 'anywhere'
 
     //name user
     const nameUser = document.createElement('p')
@@ -1077,7 +1094,8 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
 
     // create text content
     const messageTextDiv = document.createElement('div')
-    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') + ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
+    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') +
+        ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
 
     // create text time
     const timestampP = document.createElement('p')
