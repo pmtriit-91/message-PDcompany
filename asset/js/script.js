@@ -1,5 +1,5 @@
 import { randomAvatarURL, randomName } from './randomName.js'
-import getListFriends from './listFriend.js'
+// import getListFriends from './listFriend.js'
 
 // console.log = function () { }
 
@@ -10,8 +10,7 @@ const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
 const buttonLogout = document.getElementsByClassName('button-logout')
 const emoji = document.getElementById('emoji')
-let currentUserSelected = {
-
+let currentFriend = {
 }
 //token
 const token = JSON.parse(localStorage.getItem('token'))
@@ -42,6 +41,12 @@ const activeCardFriends = []
 //
 let isUploaded = false
 let isUploadWaitImage = false
+
+//
+let currentNewChatDiv = null
+
+//count mess unseen
+let arrayFriendID = []
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
@@ -96,14 +101,263 @@ var socket = io.connect(baseUrl, {
     }
 })
 
+
+//
+let listFriends = []
+const arrayPrivate = []
+const bodyLeft = document.querySelector('#body-left')
+// let newChatDiv
+axios.post(urlFullInfo, {
+    "head": {
+        "code": 145, //code 145: list friend
+        "userID": dataUser.userID,
+        "token": token,
+        "cID": dataUser.cID,
+        "version": 2
+    },
+    "body": {}
+}, {
+    headers: {
+        "Content-Type": "application/json",
+    }
+})
+    .then(response => {
+        listFriends = [...response.data.members]
+        localStorage.setItem('dataFriends', JSON.stringify(listFriends))
+        const usedIndexes = []
+        listFriends.forEach((friend) => {
+            const array = [4, 5, 6]
+            let randomIndex
+            do {
+                randomIndex = Math.floor(Math.random() * array.length)
+            } while (usedIndexes.includes(randomIndex))
+
+            usedIndexes.push(randomIndex)
+
+            const newCard = document.createElement('div')
+            newCard.className = 'card card-friend'
+            newCard.style.maxWidth = '540px'
+
+            newCard.id = `friend-${friend.id}`
+
+            newCard.innerHTML = `
+                    <div class="row row-card-avatar g-0">
+                        <div id="friend-img-${friend.id}" class="col-3 col-md-3 custom-img">
+                            <img src="./asset/image/avatar${array[randomIndex]}.jpeg" class="img-fluid avatar-group" alt="...">
+                        </div>
+                        <div class="col-9 col-md-9 d-flex align-items-center">
+                            <div class="card-body" id="card-body-${friend.id}">
+                                <h5 class="card-title">${friend.f_name}</h5>
+                                <p class="card-text card-text-sub"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
+                                <p class="card-text card-text-sub"><small id="card-time-${friend.id}" class="text-body-secondary text-time">time</small></p>
+                                <div class="chat-bubble">
+                                    <div class="typing">
+                                        <div class="dot"></div>
+                                        <div class="dot"></div>
+                                        <div class="dot"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            bodyLeft.appendChild(newCard)
+
+            //render last mess
+            arrayFriendID.push(friend.id)
+            const newChatDiv = $("<div>")
+                .addClass(`wrapper-private-chat-${friend.id}`)
+                .css({
+                    'flex': '1',
+                    'padding-left': '20px',
+                    'padding-right': '20px',
+                    'overflow-y': 'scroll',
+                })
+
+            //get lastInfo chat 1-1
+            getLastMessPrivate(friend, newChatDiv)
+            console.log('aaaaa', friend)
+            //create head-img
+            const headCardImg = $('.custom-img-head')
+
+            //click card
+            $(document).on("click", `#friend-${friend.id}`, function () {
+                isGroup = false
+                currentFriend = { ...friend }
+
+                currentNewChatDiv = newChatDiv
+
+                console.log('isGroup: ', isGroup)
+                //call func save mess unsend
+                saveMessWhenSwitchToFriend(friend.id)
+
+                //debounce input
+                function debounce(func, delay) {
+                    let timer
+                    return function (...args) {
+                        const context = this
+                        clearTimeout(timer)
+                        timer = setTimeout(() => {
+                            func.apply(context, args)
+                        }, delay)
+                    }
+                }
+
+                let typingTimer
+                //debounce typing
+                const debounceTypingEvent = debounce((event) => {
+                    const inputValue = event.target.value
+                    const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+                    if (inputValue.length > 0) {
+                        socket.emit('chat_typing', info)
+                    } else {
+                        socket.emit('chat_clear_typing', info)
+                    }
+                }, 1200)
+
+                // func typing
+                const handleTyping = (event) => {
+                    clearTimeout(typingTimer)
+
+                    typingTimer = setTimeout(() => {
+                        const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+                        socket.emit('chat_clear_typing', info)
+                    }, 10000)
+
+                    debounceTypingEvent(event)
+                }
+
+                messageInput.addEventListener('input', (event) => {
+                    handleTyping(event)
+                })
+
+                //action switch headCardImg
+                headCardImg.html(`
+            <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
+            <div class="card-head-custom">
+                <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
+            </div>
+            `)
+
+                //action hide/show wrapper-private-chat
+                arrayPrivate.forEach(nodeElm => {
+                    nodeElm != currentNewChatDiv ? nodeElm.hide() : nodeElm.show()
+                })
+
+                $("#wrapper-chat").after(currentNewChatDiv)
+                arrayPrivate.push(currentNewChatDiv)
+                // Scroll về cuối cùng của newChatDiv
+                const scrollHeight = currentNewChatDiv[0].scrollHeight
+                const clientHeight = currentNewChatDiv[0].clientHeight
+                currentNewChatDiv[0].scrollTop = scrollHeight
+
+                //xóa active va hide group
+                groupSurecommand.classList.remove('active')
+                $("#wrapper-chat").hide()
+
+                activeCardFriends.forEach(activeCard => {
+                    activeCard.classList.remove('active')
+                })
+
+                // active
+                newCard.classList.add('active')
+            })
+            activeCardFriends.push(newCard)
+        })
+    })
+    .catch(error => {
+        console.log(error)
+    })
+
+//
+
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
+
+    // tra thong tin socket bên phía user nhận
+    socket.on("socket_result", (data) => {
+        console.log('data event socket_result', data)
+        // switch (data.key) {
+        //     case 'chat_new_message':
+        //         break;
+        // }
+        if (data.key === "chat_new_message") {
+            const id = Number(data.data.senderid)
+
+            let friend = listFriends.find(f => f.id == id)
+            console.log('ccccc', friend.divChat)
+            addMessPrivate(data.data, friend.divChat, currentFriend, false, false)
+
+            //show lastmess card-friend
+            socket.emit('load_last_mess', {
+                senderid: id, // friend.id
+                receiverid: Number(dataUser.userID) //userId
+            }, (err, data) => {
+                console.log(data);
+                const timeString = data[0].send_timestamp
+                const time = data[0] && data[0].send_timestamp ?
+                    moment(timeString).format("HH:mm MMM DD, YYYY") : ''
+                document.getElementById(`card-time-${id}`).innerHTML = time
+
+                if (Number(data[0].senderid) === Number(dataUser.userID)) {
+                    $(`#card-text-${id}`).text('you: ' + data[0].message)
+                } else {
+                    $(`#card-text-${id}`).text(friend.f_name + ': ' + data[0].message)
+                }
+            })
+
+            //đếm tin nhắn chưa đọc
+            const infoCount = {
+                senderids: senderids,
+                receiverid: Number(dataUser.userID)
+            }
+            socket.emit('get_unread_count', infoCount, (err, data) => {
+                data.forEach((elm) => {
+                    if (senderids.includes(elm.senderid)) {
+                        const friendImgDiv = $(`#friend-img-${elm.senderid}`)
+                        const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
+                        const noteMess = $('<p>').text(elm.unread)
+
+                        friendImgDiv.append(noteMessDiv.append(noteMess))
+
+                        //đánh dấu đã đọc tin nhắn
+                        // //
+                        const cardFriend = document.getElementById(`friend-${elm.senderid}`)
+                        cardFriend.addEventListener('click', () => {
+                            const infoRead = {
+                                senderid: Number(dataUser.userID),
+                                receiverid: elm.senderid
+                            }
+                            socket.emit('mark_as_read', infoRead, (err, data) => {
+                                noteMessDiv.remove()
+                            })
+                        })
+
+                    }
+                })
+            })
+            localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
+        }
+
+        //typing
+        const cardBody = $(`#card-body-${data.data.senderid}`)
+        const chatBubble = cardBody.find('.chat-bubble')
+        if (data.key === "chat_typing") {
+            // ẩn tất cả các phần tử <p> có trong card-body
+            cardBody.find('p').hide()
+            chatBubble.show()
+        } else {
+            cardBody.find('p').show()
+            chatBubble.hide()
+        }
+    })
 })
 
 //up image
+let pathImage
 let isImageSent = false
 function sendImageMessage(friend, newChatDiv, mediaID, pathImage, type) {
-    if (!isGroup) {
+    if (!isGroup && !isImageSent) {
         const activeCard = document.querySelector('.card-friend.active')
         if (activeCard) {
             sendMessagePrivate(friend.id, friend, newChatDiv, mediaID, pathImage, type)
@@ -131,8 +385,7 @@ function uploadFile(file, friend, newChatDiv) {
             if (xhr.status === 200) {
                 console.log('Upload thành công!')
                 console.log('dataImage', dataImage)
-                const pathImage = dataImage.data.content.replace('public/', '')
-                const urlImage = baseUrl + pathImage
+                pathImage = dataImage.data.content.replace('public/', '')
                 const type = dataImage.data.type
                 const mediaID = dataImage.data.id
                 isUploadWaitImage = true
@@ -144,7 +397,7 @@ function uploadFile(file, friend, newChatDiv) {
                     const imageWrapper = $(this).closest('.container-image')
                     imageWrapper.remove()
 
-                    //remove event click btn-del
+                    // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
 
                     sendMessageButton.removeEventListener('click', sendImage)
@@ -159,6 +412,7 @@ function uploadFile(file, friend, newChatDiv) {
                         sendImageMessage(friend, newChatDiv, mediaID, pathImage, type)
                     }
                 }
+                isImageSent = false
             } else {
                 console.error('Upload thất bại.')
             }
@@ -183,7 +437,7 @@ function saveMessWhenSwitchToFriend(friendID) {
 }
 
 //đếm tin nhắn chưa đọc
-const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
+const senderids = arrayFriendID
 const infoCount = {
     senderids: senderids,
     receiverid: Number(dataUser.userID)
@@ -215,8 +469,7 @@ socket.emit('get_unread_count', infoCount, (err, data) => {
     })
 })
 // get list friends
-let currentFriend = null
-let currentNewChatDiv = null
+// let currentFriend = null
 //send mess 1-1
 function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, type) {
     const messageContent = messageInput.value.trim()
@@ -280,6 +533,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, ty
             type
         }
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
+            console.log('path', pathImage);
             isUploaded = data.success
             isUploadWaitImage = false
             const imageWrapper = $('.btn-del-image').closest('.container-image')
@@ -289,221 +543,222 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, ty
     }
 }
 
-const handleRenderCardFriend = (friendData) => {
-    const arrayPrivate = []
-    const arrayFriendID = []
+// const handleRenderCardFriend = (friendData) => {
+//     return
+//     const arrayPrivate = []
+//     // const arrayFriendID = []
 
-    friendData.forEach((friend) => {
-        arrayFriendID.push(friend.id)
-        localStorage.setItem('arrayFriendID', JSON.stringify(arrayFriendID))
+//     friendData.forEach((friend) => {
+//         arrayFriendID.push(friend.id)
 
-        //create wrapper-private-chat
-        const cardFriend = document.getElementById(`friend-${friend.id}`)
-        const newChatDiv = $("<div>")
-            .addClass(`wrapper-private-chat-${friend.id}`)
-            .css({
-                'flex': '1',
-                'padding-left': '20px',
-                'padding-right': '20px',
-                'overflow-y': 'scroll',
-            })
+//         //create wrapper-private-chat
+//         const cardFriend = $(`#friend-${friend.id}`)
+//         // const cardFriend = document.getElementById(`friend-${friend.id}`)
+//         const newChatDiv = $("<div>")
+//             .addClass(`wrapper-private-chat-${friend.id}`)
+//             .css({
+//                 'flex': '1',
+//                 'padding-left': '20px',
+//                 'padding-right': '20px',
+//                 'overflow-y': 'scroll',
+//             })
 
-        //get lastInfo chat 1-1
-        getLastMessPrivate(friend, newChatDiv)
+//         //get lastInfo chat 1-1
+//         getLastMessPrivate(friend, newChatDiv)
 
-        //create head-img
-        const headCardImg = $('.custom-img-head')
+//         //create head-img
+//         const headCardImg = $('.custom-img-head')
 
-        cardFriend.addEventListener('click', () => {
-            isGroup = false
-            currentFriend = friend
-            currentNewChatDiv = newChatDiv
-            console.log('isGroup: ', isGroup)
+//         cardFriend.click(() => {
+//             isGroup = false
+//             currentFriend = { ...friend }
 
-            //call func save mess unsend
-            saveMessWhenSwitchToFriend(friend.id)
+//             currentNewChatDiv = newChatDiv
 
-            //debounce input
-            function debounce(func, delay) {
-                let timer
-                return function (...args) {
-                    const context = this
-                    clearTimeout(timer)
-                    timer = setTimeout(() => {
-                        func.apply(context, args)
-                    }, delay)
-                }
-            }
+//             console.log('isGroup: ', isGroup)
+//             //call func save mess unsend
+//             saveMessWhenSwitchToFriend(friend.id)
 
-            let typingTimer
-            //debounce typing
-            const debounceTypingEvent = debounce((event) => {
-                const inputValue = event.target.value
-                const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
-                if (inputValue.length > 0) {
-                    socket.emit('chat_typing', info)
-                } else {
-                    socket.emit('chat_clear_typing', info)
-                }
-            }, 1200)
+//             //debounce input
+//             function debounce(func, delay) {
+//                 let timer
+//                 return function (...args) {
+//                     const context = this
+//                     clearTimeout(timer)
+//                     timer = setTimeout(() => {
+//                         func.apply(context, args)
+//                     }, delay)
+//                 }
+//             }
 
-            // func typing
-            const handleTyping = (event) => {
-                clearTimeout(typingTimer)
+//             let typingTimer
+//             //debounce typing
+//             const debounceTypingEvent = debounce((event) => {
+//                 const inputValue = event.target.value
+//                 const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+//                 if (inputValue.length > 0) {
+//                     socket.emit('chat_typing', info)
+//                 } else {
+//                     socket.emit('chat_clear_typing', info)
+//                 }
+//             }, 1200)
 
-                typingTimer = setTimeout(() => {
-                    const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
-                    socket.emit('chat_clear_typing', info)
-                }, 10000)
+//             // func typing
+//             const handleTyping = (event) => {
+//                 clearTimeout(typingTimer)
 
-                debounceTypingEvent(event)
-            }
+//                 typingTimer = setTimeout(() => {
+//                     const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
+//                     socket.emit('chat_clear_typing', info)
+//                 }, 10000)
 
-            messageInput.addEventListener('input', (event) => {
-                handleTyping(event)
-            })
+//                 debounceTypingEvent(event)
+//             }
 
-            //action switch headCardImg
-            headCardImg.html(`
-            <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
-            <div class="card-head-custom">
-                <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
-            </div>
-            `)
+//             messageInput.addEventListener('input', (event) => {
+//                 handleTyping(event)
+//             })
 
-            //action hide/show wrapper-private-chat
-            arrayPrivate.forEach(nodeElm => {
-                nodeElm != currentNewChatDiv ? nodeElm.hide() : nodeElm.show()
-            })
+//             //action switch headCardImg
+//             headCardImg.html(`
+//             <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
+//             <div class="card-head-custom">
+//                 <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
+//             </div>
+//             `)
 
-            $("#wrapper-chat").after(currentNewChatDiv)
-            arrayPrivate.push(currentNewChatDiv)
-            // Scroll về cuối cùng của newChatDiv
-            const scrollHeight = currentNewChatDiv[0].scrollHeight
-            const clientHeight = currentNewChatDiv[0].clientHeight
-            currentNewChatDiv[0].scrollTop = scrollHeight
+//             //action hide/show wrapper-private-chat
+//             arrayPrivate.forEach(nodeElm => {
+//                 nodeElm != currentNewChatDiv ? nodeElm.hide() : nodeElm.show()
+//             })
 
-            //xóa active va hide group
-            groupSurecommand.classList.remove('active')
-            $("#wrapper-chat").hide()
+//             $("#wrapper-chat").after(currentNewChatDiv)
+//             arrayPrivate.push(currentNewChatDiv)
+//             // Scroll về cuối cùng của newChatDiv
+//             const scrollHeight = currentNewChatDiv[0].scrollHeight
+//             const clientHeight = currentNewChatDiv[0].clientHeight
+//             currentNewChatDiv[0].scrollTop = scrollHeight
 
-            activeCardFriends.forEach(activeCard => {
-                activeCard.classList.remove('active')
-            })
+//             //xóa active va hide group
+//             groupSurecommand.classList.remove('active')
+//             $("#wrapper-chat").hide()
 
-            // active
-            cardFriend.classList.add('active')
+//             activeCardFriends.forEach(activeCard => {
+//                 activeCard.removeClass('active')
+//             })
 
-            //send mess 1-1
-            // add click and keypress event outside the loop
-            sendMessageButton.addEventListener('click', () => {
-                if (!isGroup) {
-                    const activeCard = document.querySelector('.card-friend.active')
-                    if (activeCard) {
-                        const friendID = activeCard.id.split('-')[1]
-                        sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
-                    }
-                }
-            })
-            messageInput.addEventListener('keypress', (event) => {
-                if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault()
-                    const activeCard = document.querySelector('.card-friend.active')
-                    if (activeCard) {
-                        const friendID = activeCard.id.split('-')[1]
-                        sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
-                    }
-                }
-            })
+//             // active
+//             cardFriend.addClass('active')
+//         })
+//         // // // tra thong tin socket bên phía user nhận
+//         // socket.on("socket_result", (data) => {
+//         //     console.log('data event socket_result', data)
+//         //     if (data.key === "chat_new_message" && Number(data.data.senderid) === Number(friend.id)) {
+//         //         // getLastMessPrivate(friend, newChatDiv)
+//         //         addMessPrivate(data.data, newChatDiv, friend, false, false)
 
-            //upload
-            document.getElementById('open-image-upload').addEventListener('click', function () {
-                const fileUploader = document.getElementById('file-uploader')
-                if (fileUploader) {
-                    fileUploader.click()
+//         //         //show lastmess card-friend
+//         //         socket.emit('load_last_mess', {
+//         //             senderid: friend.id, // friend.id
+//         //             receiverid: Number(dataUser.userID) //userId
+//         //         }, (err, data) => {
+//         //             const timeString = data[0].send_timestamp
+//         //             const time = data[0] && data[0].send_timestamp ?
+//         //                 moment(timeString).format("HH:mm MMM DD, YYYY") : ''
+//         //             document.getElementById(`card-time-${friend.id}`).innerHTML = time
 
-                    fileUploader.addEventListener('change', function () {
-                        const file = fileUploader.files[0]
-                        uploadFile(file, friend, newChatDiv)
-                    })
-                }
-            })
+//         //             if (Number(data[0].senderid) === Number(dataUser.userID)) {
+//         //                 $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
+//         //             } else {
+//         //                 $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
+//         //             }
+//         //         })
 
+//         //         //đếm tin nhắn chưa đọc
+//         //         const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
+//         //         const infoCount = {
+//         //             senderids: senderids,
+//         //             receiverid: Number(dataUser.userID)
+//         //         }
+//         //         socket.emit('get_unread_count', infoCount, (err, data) => {
+//         //             data.forEach((elm) => {
+//         //                 if (senderids.includes(elm.senderid)) {
+//         //                     const friendImgDiv = $(`#friend-img-${elm.senderid}`)
+//         //                     const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
+//         //                     const noteMess = $('<p>').text(elm.unread)
+
+//         //                     friendImgDiv.append(noteMessDiv.append(noteMess))
+
+//         //                     //đánh dấu đã đọc tin nhắn
+//         //                     // //
+//         //                     const cardFriend = document.getElementById(`friend-${elm.senderid}`)
+//         //                     cardFriend.addEventListener('click', () => {
+//         //                         const infoRead = {
+//         //                             senderid: Number(dataUser.userID),
+//         //                             receiverid: elm.senderid
+//         //                         }
+//         //                         socket.emit('mark_as_read', infoRead, (err, data) => {
+//         //                             noteMessDiv.remove()
+//         //                         })
+//         //                     })
+
+//         //                 }
+//         //             })
+//         //         })
+//         //         localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
+//         //     }
+
+//         //     //typing
+//         //     const cardBody = $(`#card-body-${data.data.senderid}`)
+//         //     const chatBubble = cardBody.find('.chat-bubble')
+//         //     if (data.key === "chat_typing") {
+//         //         // ẩn tất cả các phần tử <p> có trong card-body
+//         //         cardBody.find('p').hide()
+//         //         chatBubble.show()
+//         //     } else {
+//         //         cardBody.find('p').show()
+//         //         chatBubble.hide()
+//         //     }
+//         // })
+//         activeCardFriends.push(cardFriend)
+//     })
+// }
+// getListFriends(token, dataUser, urlFullInfo, handleRenderCardFriend)
+
+sendMessageButton.addEventListener('click', () => {
+    if (!isGroup) {
+        const activeCard = document.querySelector('.card-friend.active')
+        if (activeCard) {
+            const friendID = activeCard.id.split('-')[1]
+            sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
+        }
+    }
+})
+messageInput.addEventListener('keypress', (event) => {
+    if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault()
+        const activeCard = document.querySelector('.card-friend.active')
+        if (activeCard) {
+            const friendID = activeCard.id.split('-')[1]
+            sendMessagePrivate(friendID, currentFriend, currentNewChatDiv)
+        }
+    }
+})
+$('#open-image-upload').click(function () {
+    const fileUploader = document.getElementById('file-uploader')
+    if (fileUploader) {
+        fileUploader.click()
+
+        fileUploader.addEventListener('change', function handleFileChange() {
+            console.log(fileUploader.files[0])
+            const file = fileUploader.files[0]
+            uploadFile(file, currentFriend, currentNewChatDiv)
+
+            fileUploader.removeEventListener('change', handleFileChange)
         })
-        // // tra thong tin socket bên phía user nhận
-        socket.on("socket_result", (data) => {
-            console.log('data event socket_result', data)
-            if (data.key === "chat_new_message" && Number(data.data.senderid) === Number(friend.id)) {
-                // getLastMessPrivate(friend, newChatDiv)
-                addMessPrivate(data.data, newChatDiv, friend, false, false)
+    }
+})
 
-                //show lastmess card-friend
-                socket.emit('load_last_mess', {
-                    senderid: friend.id, // friend.id
-                    receiverid: Number(dataUser.userID) //userId
-                }, (err, data) => {
-                    const timeString = data[0].send_timestamp
-                    const time = data[0] && data[0].send_timestamp ?
-                        moment(timeString).format("HH:mm MMM DD, YYYY") : ''
-                    document.getElementById(`card-time-${friend.id}`).innerHTML = time
-
-                    if (Number(data[0].senderid) === Number(dataUser.userID)) {
-                        $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
-                    } else {
-                        $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
-                    }
-                })
-
-                //đếm tin nhắn chưa đọc
-                const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
-                const infoCount = {
-                    senderids: senderids,
-                    receiverid: Number(dataUser.userID)
-                }
-                socket.emit('get_unread_count', infoCount, (err, data) => {
-                    data.forEach((elm) => {
-                        if (senderids.includes(elm.senderid)) {
-                            const friendImgDiv = $(`#friend-img-${elm.senderid}`)
-                            const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
-                            const noteMess = $('<p>').text(elm.unread)
-
-                            friendImgDiv.append(noteMessDiv.append(noteMess))
-
-                            //đánh dấu đã đọc tin nhắn
-                            // //
-                            const cardFriend = document.getElementById(`friend-${elm.senderid}`)
-                            cardFriend.addEventListener('click', () => {
-                                const infoRead = {
-                                    senderid: Number(dataUser.userID),
-                                    receiverid: elm.senderid
-                                }
-                                socket.emit('mark_as_read', infoRead, (err, data) => {
-                                    noteMessDiv.remove()
-                                })
-                            })
-
-                        }
-                    })
-                })
-                localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
-            }
-
-            //typing
-            const cardBody = $(`#card-body-${data.data.senderid}`)
-            const chatBubble = cardBody.find('.chat-bubble')
-            if (data.key === "chat_typing") {
-                // ẩn tất cả các phần tử <p> có trong card-body
-                cardBody.find('p').hide()
-                chatBubble.show()
-            } else {
-                cardBody.find('p').show()
-                chatBubble.hide()
-            }
-        })
-        activeCardFriends.push(cardFriend)
-    })
-}
-getListFriends(token, dataUser, urlFullInfo, handleRenderCardFriend)
 
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
@@ -533,6 +788,7 @@ const getLastMessPrivate = (friend, newChatDiv) => {
                 let lastMessageId = data[0].id
                 // let receiverid = data[0].receiverid
                 // addToIdPairs(lastMessageId, receiverid)
+                friend.divChat = newChatDiv
                 getHistoryPrivate(friend, newChatDiv, lastMessageId, false)
                 newChatDiv.on('scroll', () => {
                     if (newChatDiv.scrollTop() === 0) {

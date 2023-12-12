@@ -56,6 +56,10 @@ function getListFriends(token, dataUser, baseUrl, callback) {
                     </div>
                 `
                 bodyLeft.appendChild(newCard)
+
+                $(document).on("click", `#friend-${friend.id}`, function () {
+                    alert("I've been clicked")
+                })
             })
             callback(listFriends)
         })
