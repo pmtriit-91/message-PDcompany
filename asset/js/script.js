@@ -101,12 +101,10 @@ var socket = io.connect(baseUrl, {
     }
 })
 
-
-//
+//get list friend
 let listFriends = []
 const arrayPrivate = []
 const bodyLeft = document.querySelector('#body-left')
-// let newChatDiv
 axios.post(urlFullInfo, {
     "head": {
         "code": 145, //code 145: list friend
@@ -123,7 +121,7 @@ axios.post(urlFullInfo, {
 })
     .then(response => {
         listFriends = [...response.data.members]
-        localStorage.setItem('dataFriends', JSON.stringify(listFriends))
+        // localStorage.setItem('dataFriends', JSON.stringify(listFriends))
         const usedIndexes = []
         listFriends.forEach((friend) => {
             const array = [4, 5, 6]
@@ -176,7 +174,6 @@ axios.post(urlFullInfo, {
 
             //get lastInfo chat 1-1
             getLastMessPrivate(friend, newChatDiv)
-            console.log('aaaaa', friend)
             //create head-img
             const headCardImg = $('.custom-img-head')
 
@@ -233,11 +230,11 @@ axios.post(urlFullInfo, {
 
                 //action switch headCardImg
                 headCardImg.html(`
-            <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
-            <div class="card-head-custom">
-                <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
-            </div>
-            `)
+                    <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
+                    <div class="card-head-custom">
+                        <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
+                    </div>
+                `)
 
                 //action hide/show wrapper-private-chat
                 arrayPrivate.forEach(nodeElm => {
@@ -356,18 +353,18 @@ socket.on('connect', () => {
 //up image
 let pathImage
 let isImageSent = false
-function sendImageMessage(friend, newChatDiv, mediaID, pathImage, type) {
+function sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type) {
     if (!isGroup && !isImageSent) {
         const activeCard = document.querySelector('.card-friend.active')
         if (activeCard) {
-            sendMessagePrivate(friend.id, friend, newChatDiv, mediaID, pathImage, type)
+            sendMessagePrivate(friend.id, friend, currentNewChatDiv, mediaID, pathImage, type)
             isImageSent = true
         } else {
             console.log('loi up anh')
         }
     }
 }
-function uploadFile(file, friend, newChatDiv) {
+function uploadFile(file, friend) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
         userID: dataUser.userID,
@@ -383,14 +380,14 @@ function uploadFile(file, friend, newChatDiv) {
             console.log(JSON.parse(xhr.responseText))
             const dataImage = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
-                console.log('Upload thành công!')
-                console.log('dataImage', dataImage)
+                // console.log('Upload thành công!')
+                // console.log('dataImage', dataImage)
                 pathImage = dataImage.data.content.replace('public/', '')
                 const type = dataImage.data.type
                 const mediaID = dataImage.data.id
                 isUploadWaitImage = true
                 isUploaded = false
-                addMessPrivate(pathImage, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
+                addMessPrivate(pathImage, currentNewChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
@@ -409,7 +406,7 @@ function uploadFile(file, friend, newChatDiv) {
                 // func send image
                 function sendImage() {
                     if (!isImageSent) {
-                        sendImageMessage(friend, newChatDiv, mediaID, pathImage, type)
+                        sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
                     }
                 }
                 isImageSent = false
@@ -436,7 +433,7 @@ function saveMessWhenSwitchToFriend(friendID) {
     currentFriendID = friendID
 }
 
-//đếm tin nhắn chưa đọc
+//count mess unseen 
 const senderids = arrayFriendID
 const infoCount = {
     senderids: senderids,
@@ -468,8 +465,6 @@ socket.emit('get_unread_count', infoCount, (err, data) => {
         }
     })
 })
-// get list friends
-// let currentFriend = null
 //send mess 1-1
 function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, type) {
     const messageContent = messageInput.value.trim()
@@ -483,7 +478,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, ty
         }
 
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            console.log(data)
+            // console.log(data)
             if (Number(data.msg.receiverid) === Number(friendID)) {
                 addMessPrivate(data.msg, newChatDiv, friend, true, false)
 
@@ -533,7 +528,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathImage, ty
             type
         }
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            console.log('path', pathImage);
+            // console.log('path', pathImage);
             isUploaded = data.success
             isUploadWaitImage = false
             const imageWrapper = $('.btn-del-image').closest('.container-image')
@@ -752,7 +747,7 @@ $('#open-image-upload').click(function () {
         fileUploader.addEventListener('change', function handleFileChange() {
             console.log(fileUploader.files[0])
             const file = fileUploader.files[0]
-            uploadFile(file, currentFriend, currentNewChatDiv)
+            uploadFile(file, currentFriend)
 
             fileUploader.removeEventListener('change', handleFileChange)
         })
@@ -769,9 +764,7 @@ const getLastMessPrivate = (friend, newChatDiv) => {
         if (err) {
             console.log(err)
         } else {
-            console.log('lastMessPrivate', data)
-            //add info sidebar left
-            //time
+            // console.log('lastMessPrivate', data)
             const time = data && data[0] ?
                 `${moment(data[0].send_timestamp).format('HH:mm')} ${moment(data[0].send_timestamp).format('MMM DD, YYYY')}` : ''
             document.getElementById(`card-time-${friend.id}`).innerHTML = time
@@ -786,8 +779,6 @@ const getLastMessPrivate = (friend, newChatDiv) => {
 
                 //scrollTop event
                 let lastMessageId = data[0].id
-                // let receiverid = data[0].receiverid
-                // addToIdPairs(lastMessageId, receiverid)
                 friend.divChat = newChatDiv
                 getHistoryPrivate(friend, newChatDiv, lastMessageId, false)
                 newChatDiv.on('scroll', () => {
@@ -816,7 +807,7 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
         if (err) {
             console.log(err)
         } else {
-            console.log('dataPrivate ', dataPrivate)
+            // console.log('dataPrivate ', dataPrivate)
 
             const tempMessages = []
             dataPrivate.Messages.forEach(message => {
@@ -858,7 +849,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         if (isUploadWaitImage) {
             const pathImage = data
             const urlImage = baseUrl + pathImage
-            console.log(urlImage)
+            // console.log(urlImage)
 
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
             messageTextDiv.html(`<div class="wrap-image-wait">
@@ -872,7 +863,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         if (isUploaded) {
             const pathImage = data.replace('public/', '')
             const urlImage = baseUrl + pathImage
-            console.log(urlImage);
+            // console.log(urlImage);
 
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
