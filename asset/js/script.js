@@ -1009,18 +1009,16 @@ groupSurecommand.addEventListener('click', () => {
 
 //get history mess
 function getHistoryMessagesGroup(id, isScrolling) {
-    socket.emit('push2talk_load_msg', { start: ++id, numView: 20 }, (err, res) => {
+    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             if (res) {
-                console.log('history mess: ', res.Messages)
-
-                //add history in DOM
-                const arrReverse = res.Messages.reverse()
+                const arrReverse = res.reverse()
                 const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
 
                 newMessages.forEach(message => {
+                    console.log(message);
                     loadedMessageIDs.push(message.id)
                     var isCurrentUser = message.userID === Number(dataUser.userID)
 
@@ -1050,7 +1048,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
     if (isCurrentUser) {
         nameUser.textContent = 'you'
     } else {
-        nameUser.textContent = messageData && messageData.displayName ? messageData.displayName : ''
+        nameUser.textContent = messageData && messageData.userName ? messageData.userName : ''
     }
 
     // create div avatar
@@ -1101,14 +1099,15 @@ function sendMessage() {
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
 
     if (messageContent) {
-        const info = {
+        const message = {
             "userID": Number(dataUser.userID),
             "cID": dataUser.cid,
-            "content": messageContent,
+            "message": messageContent,
             "type": "text",
-            "displayName": userInfo.profile.name_first,
+            // "displayName": userInfo.profile.name_first,
+            "userName": userInfo.profile.name_first
         }
-        socket.emit("push2talk_send_msg", JSON.stringify(info), (err, res) => {
+        socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
             if (err) {
                 console.log(err)
             } else {
