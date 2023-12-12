@@ -832,6 +832,19 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
     })
 }
 
+// Mở modal và hiển thị ảnh lớn
+function openModal(url) {
+    const modal = document.querySelector('.modal')
+    const modalImg = document.getElementById('img01')
+    modal.style.display = 'flex'
+    modalImg.src = url
+}
+
+// Đóng modal
+function closeModal() {
+    const modal = document.querySelector('.modal')
+    modal.style.display = 'none'
+}
 // add mess private UI
 const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, isUploadWaitImage, isUploaded) => {
     $(document).ready(function () {
@@ -878,11 +891,25 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
-                <img src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
-        }
 
+            // Tạo modal để hiển thị ảnh lớn
+            const modal = document.createElement('div')
+            modal.classList.add('modal')
+            modal.innerHTML = `
+                <span id="close-image" class="close">&times;</span>
+                <img class="modal-content" id="img01">
+            `
+            document.body.appendChild(modal)
+            $(document).on('click', `#image-${friend.id}-${data.id}`, () => {
+                openModal(urlImage)
+            })
+            $(document).on('click', '#close-image', () => {
+                closeModal()
+            })
+        }
 
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
 
