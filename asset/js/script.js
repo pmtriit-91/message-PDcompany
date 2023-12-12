@@ -401,14 +401,28 @@ function uploadFile(file, friend) {
                     isImageSent = false
                 })
 
+                messageInput.disabled = true
                 sendMessageButton.addEventListener('click', sendImage)
+
+                // document.addEventListener('keydown', handleKeyDown)
 
                 // func send image
                 function sendImage() {
                     if (!isImageSent) {
                         sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
+                        messageInput.disabled = false
                     }
                 }
+                // fnc enter send
+                // function handleKeyDown(event) {
+                //     if (event.key === 'Enter') {
+                //         sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
+                //         document.removeEventListener('keydown', handleKeyDown)
+
+                //         // $('#open-image-upload').off('click')
+                //         // $('#open-image-upload').on('click')
+                //     }
+                // }
                 isImageSent = false
             } else {
                 console.error('Upload thất bại.')
@@ -731,6 +745,7 @@ sendMessageButton.addEventListener('click', () => {
 })
 messageInput.addEventListener('keypress', (event) => {
     if (!isGroup && event.key === 'Enter' && !event.shiftKey) {
+        console.log('aaa');
         event.preventDefault()
         const activeCard = document.querySelector('.card-friend.active')
         if (activeCard) {
@@ -753,7 +768,6 @@ $('#open-image-upload').click(function () {
         })
     }
 })
-
 
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
@@ -832,15 +846,13 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
     })
 }
 
-// Mở modal và hiển thị ảnh lớn
+// open/close Modal show fullsize image
 function openModal(url) {
     const modal = document.querySelector('.modal')
     const modalImg = document.getElementById('img01')
     modal.style.display = 'flex'
     modalImg.src = url
 }
-
-// Đóng modal
 function closeModal() {
     const modal = document.querySelector('.modal')
     modal.style.display = 'none'
