@@ -38,9 +38,12 @@ let isGroup = true
 //lưu mảng các cardFriend
 const activeCardFriends = []
 
-//
+//1-1 upload
 let isUploaded = false
 let isUploadWaitImage = false
+
+//group upload
+let isUploadWaitGroup = false
 
 //
 let currentNewChatDiv = null
@@ -358,7 +361,7 @@ socket.on('connect', () => {
     })
 })
 
-//up image
+//up image 1-1
 let pathImage
 let isImageSent = false
 function sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type) {
@@ -420,6 +423,49 @@ function uploadFile(file, friend) {
                     }
                 }
                 isImageSent = false
+            } else {
+                console.error('Upload thất bại.')
+            }
+        }
+    }
+
+    xhr.open('POST', 'https://node.surecommand.com/media')
+    xhr.send(data)
+}
+
+//upload image group
+function uploadFileGroup(file) {
+    const data = new FormData()
+    data.append('mediaSendInfo', JSON.stringify({
+        userID: dataUser.userID,
+        cid: dataUser.cid,
+        receiverId: 0
+    }))
+    data.append('images', file)
+
+    const xhr = new XMLHttpRequest()
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            console.log(JSON.parse(xhr.responseText))
+            const data = JSON.parse(xhr.responseText)
+            if (xhr.status === 200) {
+                console.log('Upload thành công!')
+                console.log('data', data)
+                pathImage = JSON.stringify(data.data.content.replace('public/', ''))
+                const type = data.data.type
+                const mediaID = data.data.id
+                const displayName = data.data.displayName
+                isUploadWaitGroup = true
+
+                let message
+                if (type === 'image') {
+                    message = pathImage
+                    addMessageToChat(message, true, false, data, isUploadWaitGroup)
+                } else {
+                    console.log('mp3/mp4')
+                }
+
             } else {
                 console.error('Upload thất bại.')
             }
@@ -765,9 +811,13 @@ $('#open-image-upload').click(function () {
 function handleFileChange() {
     console.log(fileUploader.files[0])
     const file = fileUploader.files[0]
-    if (file) {
+    if (!isGroup && file) {
         uploadFile(file, currentFriend)
-    } else {
+    } else if (isGroup && file) {
+        console.log('upload image group')
+        uploadFileGroup(file)
+    }
+    else {
         // clean file value
         fileUploader.value = null
     }
@@ -1046,188 +1096,233 @@ if (isGroup) {
             if (activeCard) {
                 console.log('aa');
             }
-
-            // check new-mess
-            const displayedMessages = []
-            socket.on('new_mess', (data) => {
-                if (!displayedMessages.includes(data.id)) {
-                    var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
-                    addMessageToChat(data.content, isCurrentUser, false, data)
-                    displayedMessages.push(data.id)
-                } else {
-                    getLastMessageGroup()
-                }
-            })
-
-            // get last mess
-            function getLastMessageGroup() {
-                socket.emit('push2talk_last_msg', {}, (err, res) => {
-                    if (err) {
-                        console.log(err)
-                    } else {
-                        if (res.length > 0) {
-                            let lastMessageId = res.Messages.id
-                            // if (!loadedMessageIDs.includes(++lastMessageId)) {
-                            //     loadedMessageIDs.push(lastMessageId)
-                            //     // getHistoryMessagesGroup(lastMessageId)
-                            // }
-                            chatWrapper.addEventListener('scroll', () => {
-                                if (chatWrapper.scrollTop === 0) {
-                                    isScrolling = true
-                                    lastMessageId = Math.max(0, lastMessageId - 10)
-                                    getHistoryMessagesGroup(lastMessageId, isScrolling)
-                                }
-                            })
-                        }
-                    }
-                })
-            }
-
-            //get history mess
-            function getHistoryMessagesGroup(id, isScrolling) {
-                socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
-                    if (err) {
-                        console.log(err)
-                    } else {
-                        if (res) {
-                            const arrReverse = res.reverse()
-                            const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
-
-                            newMessages.forEach(message => {
-                                // console.log(message);
-                                loadedMessageIDs.push(message.id)
-                                var isCurrentUser = message.userID === Number(dataUser.userID)
-
-                                if (isScrolling) {
-                                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                                    addMessageToChat(message.message, isCurrentUser, true, message)
-                                } else {
-                                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                                    addMessageToChat(message.message, isCurrentUser, false, message)
-                                }
-                            })
-                        }
-                    }
-                })
-            }
-
-            //add mess UI
-            function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
-                // div wrapper
-                const messageDiv = document.createElement('div')
-                messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
-                messageDiv.style.overflowWrap = 'anywhere'
-
-                //name user
-                const nameUser = document.createElement('p')
-                nameUser.classList.add('user-name')
-
-                if (isCurrentUser) {
-                    nameUser.textContent = 'you'
-                } else {
-                    nameUser.textContent = messageData && messageData.userName ? messageData.userName : ''
-                }
-
-                // create div avatar
-                const avatarImg = document.createElement('img')
-                avatarImg.src = randomAvatarURL
-                avatarImg.alt = 'avatar'
-                avatarImg.classList.add('avatar-chat')
-
-                // create text content
-                const messageTextDiv = document.createElement('div')
-                messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') +
-                    ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
-
-                // create text time
-                const timestampP = document.createElement('p')
-                timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
-
-
-                const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
-                    `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
-                // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
-
-                //tippy time
-                tippy(messageTextDiv, {
-                    content: tooltipTime,
-                    theme: 'material',
-                    animation: 'scale',
-                    // trigger: 'click'
-                })
-
-                //add DOM
-                messageDiv.appendChild(nameUser)
-                messageTextDiv.appendChild(timestampP)
-                !isCurrentUser && messageDiv.appendChild(avatarImg)
-                messageDiv.appendChild(messageTextDiv)
-
-                if (isScrolling) {
-                    chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
-                    chatWrapper.scrollTop = chatWrapper.clientHeight
-                } else {
-                    chatWrapper.appendChild(messageDiv)
-                    chatWrapper.scrollTop = chatWrapper.scrollHeight
-                }
-            }
-
-            //send mess
-            function sendMessage() {
-                const messageContent = messageInput.value.trim()
-                const userInfo = JSON.parse(localStorage.getItem('userInfo'))
-
-                if (messageContent) {
-                    const message = {
-                        "cID": dataUser.cid,
-                        // "displayName": '',
-                        // 'mediaID': ,
-                        "message": JSON.stringify(messageContent),
-                        "type": 'text',
-                        "userID": Number(dataUser.userID),
-                        "userName": userInfo.profile.name_first
-                    }
-                    socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
-                        if (err) {
-                            console.log(err)
-                        } else {
-                            console.log(res);
-                            displayedMessages.push(res.id)
-                        }
-                    })
-
-                    // Reset the input field
-                    messageInput.value = ''
-
-                    emoji.style.display = 'none'
-                }
-            }
-
-            sendMessageButton.addEventListener('click', () => {
-                if (isGroup === true) {
-                    sendMessage()
-                }
-            })
-
-            messageInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault()
-
-                    if (isGroup === true) {
-                        sendMessage()
-                    }
-                }
-            })
-
-            //tippy Louout
-            tippy('.button-logout', {
-                content: 'Logout',
-                theme: 'material',
-                animation: 'scale',
-                // trigger: 'click'
-            })
         }
     })
 }
+
+// check new-mess
+const displayedMessages = []
+socket.on('new_mess', (data) => {
+    if (!displayedMessages.includes(data.id)) {
+        var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
+        addMessageToChat(data.content, isCurrentUser, false, data)
+        displayedMessages.push(data.id)
+    } else {
+        getLastMessageGroup()
+    }
+})
+
+// get last mess
+function getLastMessageGroup() {
+    socket.emit('push2talk_last_msg', {}, (err, res) => {
+        if (err) {
+            console.log(err)
+        } else {
+            if (res.length > 0) {
+                let lastMessageId = res.Messages.id
+                // if (!loadedMessageIDs.includes(++lastMessageId)) {
+                //     loadedMessageIDs.push(lastMessageId)
+                //     // getHistoryMessagesGroup(lastMessageId)
+                // }
+                chatWrapper.addEventListener('scroll', () => {
+                    if (chatWrapper.scrollTop === 0) {
+                        isScrolling = true
+                        lastMessageId = Math.max(0, lastMessageId - 10)
+                        getHistoryMessagesGroup(lastMessageId, isScrolling)
+                    }
+                })
+            }
+        }
+    })
+}
+
+//get history mess
+function getHistoryMessagesGroup(id, isScrolling) {
+    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
+        if (err) {
+            console.log(err)
+        } else {
+            if (res) {
+                const arrReverse = res.reverse()
+                const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
+
+                newMessages.forEach(message => {
+                    // console.log(message);
+                    loadedMessageIDs.push(message.id)
+                    var isCurrentUser = message.userID === Number(dataUser.userID)
+
+                    if (isScrolling) {
+                        // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                        addMessageToChat(message.message, isCurrentUser, true, message)
+                    } else {
+                        // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                        addMessageToChat(message.message, isCurrentUser, false, message)
+                    }
+                })
+            }
+        }
+    })
+}
+
+//add mess UI
+function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup) {
+    console.log('messageData', messageData)
+    // div wrapper
+    const messageDiv = document.createElement('div')
+    messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
+    messageDiv.style.overflowWrap = 'anywhere'
+
+    //name user
+    const nameUser = document.createElement('p')
+    nameUser.classList.add('user-name')
+
+    if (isCurrentUser) {
+        nameUser.textContent = 'you'
+    } else {
+        nameUser.textContent = messageData && messageData.userName ? messageData.userName : ''
+    }
+
+    // create div avatar
+    const avatarImg = document.createElement('img')
+    avatarImg.src = randomAvatarURL
+    avatarImg.alt = 'avatar'
+    avatarImg.classList.add('avatar-chat')
+
+    // create text content
+    // const urlImage = baseUrl + message.slice(1, - 1)
+    // const img = '.image-fullsize'
+    // console.log(urlImage)
+
+    const messageTextDiv = document.createElement('div')
+    switch (messageData.type) {
+        case 'image':
+            {
+                const url = baseUrl + message
+                const img = '.image-fullsize'
+
+                messageTextDiv.innerHTML = (`
+                <img src="${url}" class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}"></img>
+        `)
+            }
+            break
+        case 'audio':
+            {
+                const dataAudio = JSON.parse(message)
+                const url = baseUrl + dataAudio.path
+
+                messageTextDiv.innerHTML = (`
+            <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                <source src="${url}" type="audio/mpeg">
+            </audio>
+            `)
+            }
+            break
+        case 'video':
+            {
+                const dataAudio = JSON.parse(message)
+                const url = baseUrl + dataAudio.path
+                console.log(url)
+
+                messageTextDiv.innerHTML = (`
+                <video controls width='200' class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                    <source src="${url}" type="video/mp4">
+                </video>
+                `)
+            }
+            break
+        default:
+            break
+    }
+
+    // create text time
+    const timestampP = document.createElement('p')
+    timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
+
+
+    const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
+        `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
+    // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
+
+    //tippy time
+    tippy(messageTextDiv, {
+        content: tooltipTime,
+        theme: 'material',
+        animation: 'scale',
+        // trigger: 'click'
+    })
+
+    //add DOM
+    messageDiv.appendChild(nameUser)
+    messageTextDiv.appendChild(timestampP)
+    !isCurrentUser && messageDiv.appendChild(avatarImg)
+    messageDiv.appendChild(messageTextDiv)
+
+    if (isScrolling) {
+        chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        chatWrapper.scrollTop = chatWrapper.clientHeight
+    } else {
+        chatWrapper.appendChild(messageDiv)
+        chatWrapper.scrollTop = chatWrapper.scrollHeight
+    }
+}
+
+//send mess
+function sendMessage() {
+    const messageContent = messageInput.value.trim()
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+
+    if (messageContent) {
+        const message = {
+            "cID": dataUser.cid,
+            // "displayName": '',
+            // 'mediaID': ,
+            "message": JSON.stringify(messageContent),
+            "type": 'text',
+            "userID": Number(dataUser.userID),
+            "userName": userInfo.profile.name_first
+        }
+        socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
+            if (err) {
+                console.log(err)
+            } else {
+                console.log(res);
+                displayedMessages.push(res.id)
+            }
+        })
+
+        // Reset the input field
+        messageInput.value = ''
+
+        emoji.style.display = 'none'
+    }
+}
+
+sendMessageButton.addEventListener('click', () => {
+    if (isGroup === true) {
+        sendMessage()
+    }
+})
+
+messageInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault()
+
+        if (isGroup === true) {
+            sendMessage()
+        }
+    }
+})
+
+//tippy Louout
+tippy('.button-logout', {
+    content: 'Logout',
+    theme: 'material',
+    animation: 'scale',
+    // trigger: 'click'
+})
 
 
 
