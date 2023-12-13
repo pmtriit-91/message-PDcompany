@@ -393,7 +393,7 @@ function uploadFile(file, friend) {
                 $(document).on('click', '.btn-del-image', function () {
                     const imageWrapper = $(this).closest('.container-image')
                     imageWrapper.remove()
-
+                    messageInput.disabled = false
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
 
@@ -404,25 +404,26 @@ function uploadFile(file, friend) {
                 messageInput.disabled = true
                 sendMessageButton.addEventListener('click', sendImage)
 
-                // document.addEventListener('keydown', handleKeyDown)
+                document.addEventListener('keydown', handleKeyDown)
 
                 // func send image
                 function sendImage() {
                     if (!isImageSent) {
                         sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
                         messageInput.disabled = false
+                        $('#open-image-upload').on('click')
                     }
                 }
                 // fnc enter send
-                // function handleKeyDown(event) {
-                //     if (event.key === 'Enter') {
-                //         sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
-                //         document.removeEventListener('keydown', handleKeyDown)
+                function handleKeyDown(event) {
+                    if (event.key === 'Enter') {
+                        sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
+                        document.removeEventListener('keydown', handleKeyDown)
 
-                //         // $('#open-image-upload').off('click')
-                //         // $('#open-image-upload').on('click')
-                //     }
-                // }
+                        $('#open-image-upload').off('click')
+                        // $('#open-image-upload').on('click')
+                    }
+                }
                 isImageSent = false
             } else {
                 console.error('Upload thất bại.')
@@ -847,6 +848,22 @@ const getHistoryPrivate = (friend, newChatDiv, id, isPrivateScrolling) => {
 }
 
 // open/close Modal show fullsize image
+function createModal(img, url) {
+    const modal = document.createElement('div')
+    modal.classList.add('modal')
+    modal.innerHTML = `
+        <span id="close-image" class="close">&times;</span>
+        <img class="modal-content" id="img01">
+    `
+    document.body.appendChild(modal)
+    $(document).on('click', img, () => {
+        openModal(url)
+    })
+    $(document).on('click', '#close-image', () => {
+        closeModal()
+    })
+}
+
 function openModal(url) {
     const modal = document.querySelector('.modal')
     const modalImg = document.getElementById('img01')
@@ -875,68 +892,49 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         if (isUploadWaitImage) {
             const pathImage = data
             const urlImage = baseUrl + pathImage
+            const img = '.image-fullsize'
             // console.log(urlImage)
 
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
             messageTextDiv.html(`<div class="wrap-image-wait">
                 <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
-                <img src="${urlImage}" class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                <img src="${urlImage}" class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>
             </div>`)
+            // modal show fullsize image
+            createModal(img, urlImage)
         }
 
         if (isUploaded) {
             const pathImage = data.replace('public/', '')
             const urlImage = baseUrl + pathImage
+            const img = '.image-fullsize'
             // console.log(urlImage);
 
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
-                <img src=${urlImage} class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                <img src=${urlImage} class="image-fullsize image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
 
             // modal show fullsize image
-            const modal = document.createElement('div')
-            modal.classList.add('modal')
-            modal.innerHTML = `
-                <span id="close-image" class="close">&times;</span>
-                <img class="modal-content" id="img01">
-            `
-            document.body.appendChild(modal)
-            $(document).on('click', `.image-fullsize`, () => {
-                openModal(urlImage)
-            })
-            $(document).on('click', '#close-image', () => {
-                closeModal()
-            })
+            createModal(img, urlImage)
         }
 
         if (data.type && data.type === 'image') {
             const pathImage = data.message
             const urlImage = baseUrl + pathImage
+            const img = `#image-${friend.id}-${data.id}`
 
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
             messageTextDiv.html(`
-                <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
                 ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
                 </img>`)
 
             // modal show fullsize image
-            const modal = document.createElement('div')
-            modal.classList.add('modal')
-            modal.innerHTML = `
-                <span id="close-image" class="close">&times;</span>
-                <img class="modal-content" id="img01">
-            `
-            document.body.appendChild(modal)
-            $(document).on('click', `#image-${friend.id}-${data.id}`, () => {
-                openModal(urlImage)
-            })
-            $(document).on('click', '#close-image', () => {
-                closeModal()
-            })
+            createModal(img, urlImage)
         }
 
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")

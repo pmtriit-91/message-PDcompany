@@ -298,6 +298,13 @@
     cursor: pointer;
 }
 
+.image-sended {
+    max-width: 250px;
+    height: auto;
+    object-fit: contain;
+    cursor: pointer;
+}
+
 /* wrapper-private-chat */
 
 /* typing */
@@ -364,7 +371,6 @@
     margin: auto;
     display: block;
     width: auto;
-    height: 80%;
     max-width: 800px;
     max-height: 80%;
 }
@@ -400,6 +406,7 @@
 .container-image {
     background-color: rgba(0, 0, 0, 0.2);
     padding-left: 10px !important;
+    border-radius: 8px;
 }
 
 /* screen */
