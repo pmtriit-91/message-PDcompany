@@ -179,7 +179,15 @@ axios.post(urlFullInfo, {
 
             //click card
             $(document).on("click", `#friend-${friend.id}`, function () {
-                isGroup = false
+                if (isGroup) {
+                    isGroup = false
+                    socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
+                        console.log('Leaving room...', data)
+                    })
+                    messageInput.style.visibility = 'unset'
+                    $('#wrap-emoji').show()
+                }
+
                 currentFriend = { ...friend }
 
                 currentNewChatDiv = newChatDiv
@@ -271,7 +279,7 @@ axios.post(urlFullInfo, {
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 
-    // tra thong tin socket bên phía user nhận
+    // tra thong tin socket bên phía user nhận chat 1-1
     socket.on("socket_result", (data) => {
         console.log('data event socket_result', data)
         // switch (data.key) {
@@ -742,20 +750,31 @@ messageInput.addEventListener('keypress', (event) => {
         }
     }
 })
-$(document).on('click', '#open-image-upload', function () {
-    const fileUploader = document.getElementById('file-uploader')
-    if (fileUploader) {
-        fileUploader.click()
 
-        fileUploader.addEventListener('change', function handleFileChange() {
-            console.log(fileUploader.files[0])
-            const file = fileUploader.files[0]
-            uploadFile(file, currentFriend)
-
-            fileUploader.removeEventListener('change', handleFileChange)
-        })
+//click button upload image
+let fileUploader = document.getElementById('file-uploader')
+let isChangeEventAdded = false
+$('#open-image-upload').click(function () {
+    if (!isChangeEventAdded) {
+        fileUploader.addEventListener('change', handleFileChange)
+        isChangeEventAdded = true
     }
+    fileUploader.click()
 })
+
+function handleFileChange() {
+    console.log(fileUploader.files[0])
+    const file = fileUploader.files[0]
+    if (file) {
+        uploadFile(file, currentFriend)
+    } else {
+        // clean file value
+        fileUploader.value = null
+    }
+    fileUploader.removeEventListener('change', handleFileChange)
+    isChangeEventAdded = false
+}
+
 
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
@@ -967,58 +986,30 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
 //CHAT GROUP
 
-getHistoryMessagesGroup()
-getLastMessageGroup()
-
-// check new-mess
-const displayedMessages = []
-socket.on('new_mess', (data) => {
-    if (!displayedMessages.includes(data.id)) {
-        var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
-        addMessageToChat(data.content, isCurrentUser, false, data)
-        displayedMessages.push(data.id)
-    } else {
-        getLastMessageGroup()
-    }
-})
-
-// get last mess
-function getLastMessageGroup() {
-    socket.emit('push2talk_last_msg', {}, (err, res) => {
-        if (err) {
-            console.log(err)
-        } else {
-            if (res.length > 0) {
-                let lastMessageId = res.Messages.id
-                // if (!loadedMessageIDs.includes(++lastMessageId)) {
-                //     loadedMessageIDs.push(lastMessageId)
-                //     // getHistoryMessagesGroup(lastMessageId)
-                // }
-                chatWrapper.addEventListener('scroll', () => {
-                    if (chatWrapper.scrollTop === 0) {
-                        isScrolling = true
-                        lastMessageId = Math.max(0, lastMessageId - 10)
-                        getHistoryMessagesGroup(lastMessageId, isScrolling)
-                    }
-                })
-            }
-        }
-    })
-}
-
+//join/leave group
 // getLastMessageGroup() + event click
 groupSurecommand.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
 
+    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
+        if (err) {
+            console.log('join room error')
+        } else {
+            console.log('join room success')
+        }
+    })
+    messageInput.style.visibility = 'hidden'
+    $('#wrap-emoji').hide()
+
     // create head-img
     $('.custom-img-head').html(`
         <div class="col-10 col-md-8 col-lg-6 custom-img custom-img-head">
-            <img src="./asset/image/groupAvatar3.jpeg" class=" img-fluid avatar-group"
-                alt="...">
-            <div class="card-head-custom">
-                <h5 class="card-title" style="text-align: left;">Group Surecommand</h5>
-            </div>
+        <img src="./asset/image/groupAvatar3.jpeg" class=" img-fluid avatar-group"
+            alt="...">
+        <div class="card-head-custom">
+            <h5 class="card-title" style="text-align: left;">Group Surecommand</h5>
+        </div>
         </div>`)
 
     //show lại wrapper-chat và ẩn đi wrapper-chat-group
@@ -1038,143 +1029,206 @@ groupSurecommand.addEventListener('click', () => {
     getLastMessageGroup()
 })
 
-//get history mess
-function getHistoryMessagesGroup(id, isScrolling) {
-    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
+if (isGroup) {
+    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
         if (err) {
-            console.log(err)
+            console.log('join room error')
         } else {
-            if (res) {
-                const arrReverse = res.reverse()
-                const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
+            console.log('join room success')
 
-                newMessages.forEach(message => {
-                    console.log(message);
-                    loadedMessageIDs.push(message.id)
-                    var isCurrentUser = message.userID === Number(dataUser.userID)
+            getHistoryMessagesGroup()
+            getLastMessageGroup()
 
-                    if (isScrolling) {
-                        // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                        addMessageToChat(message.message, isCurrentUser, true, message)
+            messageInput.style.visibility = 'hidden'
+            $('#wrap-emoji').hide()
+
+            const activeCard = document.querySelector('.card-surecommand.active')
+            if (activeCard) {
+                console.log('aa');
+            }
+
+            // check new-mess
+            const displayedMessages = []
+            socket.on('new_mess', (data) => {
+                if (!displayedMessages.includes(data.id)) {
+                    var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
+                    addMessageToChat(data.content, isCurrentUser, false, data)
+                    displayedMessages.push(data.id)
+                } else {
+                    getLastMessageGroup()
+                }
+            })
+
+            // get last mess
+            function getLastMessageGroup() {
+                socket.emit('push2talk_last_msg', {}, (err, res) => {
+                    if (err) {
+                        console.log(err)
                     } else {
-                        // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                        addMessageToChat(message.message, isCurrentUser, false, message)
+                        if (res.length > 0) {
+                            let lastMessageId = res.Messages.id
+                            // if (!loadedMessageIDs.includes(++lastMessageId)) {
+                            //     loadedMessageIDs.push(lastMessageId)
+                            //     // getHistoryMessagesGroup(lastMessageId)
+                            // }
+                            chatWrapper.addEventListener('scroll', () => {
+                                if (chatWrapper.scrollTop === 0) {
+                                    isScrolling = true
+                                    lastMessageId = Math.max(0, lastMessageId - 10)
+                                    getHistoryMessagesGroup(lastMessageId, isScrolling)
+                                }
+                            })
+                        }
                     }
                 })
             }
-        }
-    })
-}
 
-//add mess UI
-function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
-    // div wrapper
-    const messageDiv = document.createElement('div')
-    messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
-    messageDiv.style.overflowWrap = 'anywhere'
+            //get history mess
+            function getHistoryMessagesGroup(id, isScrolling) {
+                socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        if (res) {
+                            const arrReverse = res.reverse()
+                            const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
 
-    //name user
-    const nameUser = document.createElement('p')
-    nameUser.classList.add('user-name')
+                            newMessages.forEach(message => {
+                                // console.log(message);
+                                loadedMessageIDs.push(message.id)
+                                var isCurrentUser = message.userID === Number(dataUser.userID)
 
-    if (isCurrentUser) {
-        nameUser.textContent = 'you'
-    } else {
-        nameUser.textContent = messageData && messageData.userName ? messageData.userName : ''
-    }
-
-    // create div avatar
-    const avatarImg = document.createElement('img')
-    avatarImg.src = randomAvatarURL
-    avatarImg.alt = 'avatar'
-    avatarImg.classList.add('avatar-chat')
-
-    // create text content
-    const messageTextDiv = document.createElement('div')
-    messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') +
-        ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
-
-    // create text time
-    const timestampP = document.createElement('p')
-    timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
-
-
-    const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
-        `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
-    // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
-
-    //tippy time
-    tippy(messageTextDiv, {
-        content: tooltipTime,
-        theme: 'material',
-        animation: 'scale',
-        // trigger: 'click'
-    })
-
-    //add DOM
-    messageDiv.appendChild(nameUser)
-    messageTextDiv.appendChild(timestampP)
-    !isCurrentUser && messageDiv.appendChild(avatarImg)
-    messageDiv.appendChild(messageTextDiv)
-
-    if (isScrolling) {
-        chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
-        chatWrapper.scrollTop = chatWrapper.clientHeight
-    } else {
-        chatWrapper.appendChild(messageDiv)
-        chatWrapper.scrollTop = chatWrapper.scrollHeight
-    }
-}
-
-//send mess
-function sendMessage() {
-    const messageContent = messageInput.value.trim()
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
-
-    if (messageContent) {
-        const message = {
-            "userID": Number(dataUser.userID),
-            "cID": dataUser.cid,
-            "message": messageContent,
-            "type": "text",
-            // "displayName": userInfo.profile.name_first,
-            "userName": userInfo.profile.name_first
-        }
-        socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
-            if (err) {
-                console.log(err)
-            } else {
-                displayedMessages.push(res.id)
+                                if (isScrolling) {
+                                    // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
+                                    addMessageToChat(message.message, isCurrentUser, true, message)
+                                } else {
+                                    // Nếu không cuộn, thêm tin nhắn vào dưới cùng
+                                    addMessageToChat(message.message, isCurrentUser, false, message)
+                                }
+                            })
+                        }
+                    }
+                })
             }
-        })
 
-        // Reset the input field
-        messageInput.value = ''
+            //add mess UI
+            function addMessageToChat(message, isCurrentUser, isScrolling, messageData) {
+                // div wrapper
+                const messageDiv = document.createElement('div')
+                messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
+                messageDiv.style.overflowWrap = 'anywhere'
 
-        emoji.style.display = 'none'
-    }
+                //name user
+                const nameUser = document.createElement('p')
+                nameUser.classList.add('user-name')
+
+                if (isCurrentUser) {
+                    nameUser.textContent = 'you'
+                } else {
+                    nameUser.textContent = messageData && messageData.userName ? messageData.userName : ''
+                }
+
+                // create div avatar
+                const avatarImg = document.createElement('img')
+                avatarImg.src = randomAvatarURL
+                avatarImg.alt = 'avatar'
+                avatarImg.classList.add('avatar-chat')
+
+                // create text content
+                const messageTextDiv = document.createElement('div')
+                messageTextDiv.innerHTML = '<p class=" small p-2 ' + (isCurrentUser ? null : 'ms-2') +
+                    ' mb-1 ' + (isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3') + '">' + message + '</p>'
+
+                // create text time
+                const timestampP = document.createElement('p')
+                timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
+
+
+                const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
+                    `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
+                // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
+
+                //tippy time
+                tippy(messageTextDiv, {
+                    content: tooltipTime,
+                    theme: 'material',
+                    animation: 'scale',
+                    // trigger: 'click'
+                })
+
+                //add DOM
+                messageDiv.appendChild(nameUser)
+                messageTextDiv.appendChild(timestampP)
+                !isCurrentUser && messageDiv.appendChild(avatarImg)
+                messageDiv.appendChild(messageTextDiv)
+
+                if (isScrolling) {
+                    chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+                    chatWrapper.scrollTop = chatWrapper.clientHeight
+                } else {
+                    chatWrapper.appendChild(messageDiv)
+                    chatWrapper.scrollTop = chatWrapper.scrollHeight
+                }
+            }
+
+            //send mess
+            function sendMessage() {
+                const messageContent = messageInput.value.trim()
+                const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+
+                if (messageContent) {
+                    const message = {
+                        "cID": dataUser.cid,
+                        // "displayName": '',
+                        // 'mediaID': ,
+                        "message": JSON.stringify(messageContent),
+                        "type": 'text',
+                        "userID": Number(dataUser.userID),
+                        "userName": userInfo.profile.name_first
+                    }
+                    socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
+                        if (err) {
+                            console.log(err)
+                        } else {
+                            console.log(res);
+                            displayedMessages.push(res.id)
+                        }
+                    })
+
+                    // Reset the input field
+                    messageInput.value = ''
+
+                    emoji.style.display = 'none'
+                }
+            }
+
+            sendMessageButton.addEventListener('click', () => {
+                if (isGroup === true) {
+                    sendMessage()
+                }
+            })
+
+            messageInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault()
+
+                    if (isGroup === true) {
+                        sendMessage()
+                    }
+                }
+            })
+
+            //tippy Louout
+            tippy('.button-logout', {
+                content: 'Logout',
+                theme: 'material',
+                animation: 'scale',
+                // trigger: 'click'
+            })
+        }
+    })
 }
 
-sendMessageButton.addEventListener('click', () => {
-    if (isGroup === true) {
-        sendMessage()
-    }
-})
 
-messageInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault()
 
-        if (isGroup === true) {
-            sendMessage()
-        }
-    }
-})
 
-//tippy Louout
-tippy('.button-logout', {
-    content: 'Logout',
-    theme: 'material',
-    animation: 'scale',
-    // trigger: 'click'
-})
