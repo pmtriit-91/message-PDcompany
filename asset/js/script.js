@@ -388,6 +388,7 @@ function uploadFile(file, friend) {
                 isUploadWaitImage = true
                 isUploaded = false
                 addMessPrivate(pathImage, currentNewChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
+                sendMessageButton.focus()
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
@@ -396,7 +397,6 @@ function uploadFile(file, friend) {
                     messageInput.disabled = false
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
-
                     sendMessageButton.removeEventListener('click', sendImage)
                     isImageSent = false
                 })
@@ -404,24 +404,11 @@ function uploadFile(file, friend) {
                 messageInput.disabled = true
                 sendMessageButton.addEventListener('click', sendImage)
 
-                document.addEventListener('keydown', handleKeyDown)
-
                 // func send image
                 function sendImage() {
                     if (!isImageSent) {
                         sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
                         messageInput.disabled = false
-                        $('#open-image-upload').on('click')
-                    }
-                }
-                // fnc enter send
-                function handleKeyDown(event) {
-                    if (event.key === 'Enter') {
-                        sendImageMessage(friend, currentNewChatDiv, mediaID, pathImage, type)
-                        document.removeEventListener('keydown', handleKeyDown)
-
-                        $('#open-image-upload').off('click')
-                        // $('#open-image-upload').on('click')
                     }
                 }
                 isImageSent = false
@@ -755,7 +742,7 @@ messageInput.addEventListener('keypress', (event) => {
         }
     }
 })
-$('#open-image-upload').click(function () {
+$(document).on('click', '#open-image-upload', function () {
     const fileUploader = document.getElementById('file-uploader')
     if (fileUploader) {
         fileUploader.click()
