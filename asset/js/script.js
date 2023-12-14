@@ -913,6 +913,7 @@ function createModal(img, url) {
     `
     document.body.appendChild(modal)
     $(document).on('click', img, () => {
+        console.log(url);
         openModal(url)
     })
     $(document).on('click', '#close-image', () => {
@@ -1166,7 +1167,7 @@ function getHistoryMessagesGroup(id, isScrolling) {
 
 //add mess UI
 function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup) {
-    console.log('messageData', messageData)
+    // console.log('messageData', messageData)
     // div wrapper
     const messageDiv = document.createElement('div')
     messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
@@ -1189,21 +1190,21 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
     avatarImg.classList.add('avatar-chat')
 
     // create text content
-    // const urlImage = baseUrl + message.slice(1, - 1)
-    // const img = '.image-fullsize'
-    // console.log(urlImage)
-
     const messageTextDiv = document.createElement('div')
+
     switch (messageData.type) {
         case 'image':
             {
                 const url = baseUrl + message
-                const img = '.image-fullsize'
+                const img = `.image-fullsize-${messageData.id}`
 
                 messageTextDiv.innerHTML = (`
-                <img src="${url}" class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}"></img>
-        `)
+                <img src="${url}" class="image-fullsize-${messageData.id} image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}"></img>
+                `)
+
+                // modal show fullsize image
+                createModal(img, url)
             }
             break
         case 'audio':
@@ -1213,7 +1214,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 
                 messageTextDiv.innerHTML = (`
             <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
                 <source src="${url}" type="audio/mpeg">
             </audio>
             `)
@@ -1226,8 +1227,8 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
                 console.log(url)
 
                 messageTextDiv.innerHTML = (`
-                <video controls width='200' class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                <video controls class="video text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3 bg-dark'}">
                     <source src="${url}" type="video/mp4">
                 </video>
                 `)

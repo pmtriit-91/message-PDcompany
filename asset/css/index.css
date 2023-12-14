@@ -303,6 +303,11 @@
     height: auto;
     object-fit: contain;
     cursor: pointer;
+    border-radius: 16px !important;
+}
+
+.video {
+    max-width: 250px;
 }
 
 /* wrapper-private-chat */
