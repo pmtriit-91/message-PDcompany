@@ -15,6 +15,7 @@ let currentFriend = {
 //token
 const token = JSON.parse(localStorage.getItem('token'))
 const dataUser = JSON.parse(localStorage.getItem('dataUser'))
+console.log(dataUser);
 
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
@@ -43,6 +44,7 @@ let isUploaded = false
 let isUploadWaitImage = false
 
 //group upload
+let isUploadedGroup = false
 let isUploadWaitGroup = false
 
 //
@@ -285,10 +287,6 @@ socket.on('connect', () => {
     // tra thong tin socket bên phía user nhận chat 1-1
     socket.on("socket_result", (data) => {
         console.log('data event socket_result', data)
-        // switch (data.key) {
-        //     case 'chat_new_message':
-        //         break;
-        // }
         if (data.key === "chat_new_message") {
             const id = Number(data.data.senderid)
 
@@ -434,6 +432,18 @@ function uploadFile(file, friend) {
 }
 
 //upload image group
+let isImageSentGroup
+function sendImageMessageGroup(data) {
+    if (isGroup && !isImageSentGroup) {
+        const activeCard = document.querySelector('.card-surecommand.active')
+        if (activeCard) {
+            sendMessage(data)
+            isImageSentGroup = true
+        } else {
+            console.log('loi up anh')
+        }
+    }
+}
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -447,21 +457,41 @@ function uploadFileGroup(file) {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-            console.log(JSON.parse(xhr.responseText))
             const data = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
                 console.log('Upload thành công!')
                 console.log('data', data)
                 pathImage = JSON.stringify(data.data.content.replace('public/', ''))
                 const type = data.data.type
-                const mediaID = data.data.id
-                const displayName = data.data.displayName
+
+                sendMessageButton.focus()
                 isUploadWaitGroup = true
+                isUploadedGroup = false
 
                 let message
                 if (type === 'image') {
+
+                    //del image
+                    $(document).on('click', '.btn-del-image', function () {
+                        const imageWrapper = $(this).closest('.container-image')
+                        imageWrapper.remove()
+                        messageInput.disabled = false
+                        // remove event click btn-del
+                        $(document).off('click', '.btn-del-image')
+                        sendMessageButton.removeEventListener('click', sendImageGroup)
+                        isImageSentGroup = false
+                    })
+
                     message = pathImage
-                    addMessageToChat(message, true, false, data, isUploadWaitGroup)
+                    addMessageToChat(message, true, false, data, isUploadWaitGroup, isUploadedGroup)
+                    sendMessageButton.addEventListener('click', sendImageGroup)
+                    // func send image
+                    function sendImageGroup() {
+                        if (!isImageSentGroup) {
+                            sendImageMessageGroup(data)
+                        }
+                    }
+                    isImageSentGroup = false
                 } else {
                     console.log('mp3/mp4')
                 }
@@ -811,16 +841,12 @@ $('#open-image-upload').click(function () {
 function handleFileChange() {
     console.log(fileUploader.files[0])
     const file = fileUploader.files[0]
-    if (!isGroup && file) {
-        uploadFile(file, currentFriend)
-    } else if (isGroup && file) {
-        console.log('upload image group')
-        uploadFileGroup(file)
+    if (file) {
+        isGroup ? uploadFileGroup(file) : uploadFile(file, currentFriend)
     }
-    else {
-        // clean file value
-        fileUploader.value = null
-    }
+    // clean file value
+    fileUploader.value = null
+
     fileUploader.removeEventListener('change', handleFileChange)
     isChangeEventAdded = false
 }
@@ -1093,20 +1119,23 @@ if (isGroup) {
             messageInput.style.visibility = 'hidden'
             $('#wrap-emoji').hide()
 
-            const activeCard = document.querySelector('.card-surecommand.active')
-            if (activeCard) {
-                console.log('aa');
-            }
+            // const activeCard = document.querySelector('.card-surecommand.active')
+            // if (activeCard) {
+            //     console.log('aa');
+            // }
         }
     })
 }
 
 // check new-mess
 const displayedMessages = []
-socket.on('new_mess', (data) => {
+socket.on('new_company_mess', (data) => {
+    console.log('new data', data)
+    isUploadedGroup = true
+    isUploadWaitGroup = false
     if (!displayedMessages.includes(data.id)) {
         var isCurrentUser = Number(data.userID) === Number(dataUser.userID)
-        addMessageToChat(data.content, isCurrentUser, false, data)
+        addMessageToChat(data.message, isCurrentUser, false, data, isUploadWaitGroup, isUploadedGroup)
         displayedMessages.push(data.id)
     } else {
         getLastMessageGroup()
@@ -1115,16 +1144,13 @@ socket.on('new_mess', (data) => {
 
 // get last mess
 function getLastMessageGroup() {
-    socket.emit('push2talk_last_msg', {}, (err, res) => {
+    socket.emit('load_last_company_chat', { cID: Number(dataUser.cid) }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             if (res.length > 0) {
-                let lastMessageId = res.Messages.id
-                // if (!loadedMessageIDs.includes(++lastMessageId)) {
-                //     loadedMessageIDs.push(lastMessageId)
-                //     // getHistoryMessagesGroup(lastMessageId)
-                // }
+                let lastMessageId = res[0].id
+
                 chatWrapper.addEventListener('scroll', () => {
                     if (chatWrapper.scrollTop === 0) {
                         isScrolling = true
@@ -1139,11 +1165,12 @@ function getLastMessageGroup() {
 
 //get history mess
 function getHistoryMessagesGroup(id, isScrolling) {
-    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
+    socket.emit('load_company_chat', { start: ++id, numView: 10, cID: dataUser.cid }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             if (res) {
+                // console.log('history', res);
                 const arrReverse = res.reverse()
                 const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
 
@@ -1166,7 +1193,7 @@ function getHistoryMessagesGroup(id, isScrolling) {
 }
 
 //add mess UI
-function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup) {
+function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup, isUploadedGroup) {
     // console.log('messageData', messageData)
     // div wrapper
     const messageDiv = document.createElement('div')
@@ -1213,22 +1240,22 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
                 const url = baseUrl + dataAudio.path
 
                 messageTextDiv.innerHTML = (`
-            <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
-                <source src="${url}" type="audio/mpeg">
-            </audio>
-            `)
+                <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                    <source src="${url}" type="audio/mpeg">
+                </audio>
+                `)
             }
             break
         case 'video':
             {
                 const dataAudio = JSON.parse(message)
                 const url = baseUrl + dataAudio.path
-                console.log(url)
+                // console.log(url)
 
                 messageTextDiv.innerHTML = (`
                 <video controls class="video text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                    ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3 bg-dark'}">
+                    ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
                     <source src="${url}" type="video/mp4">
                 </video>
                 `)
@@ -1238,6 +1265,47 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
             break
     }
 
+    if (isUploadWaitGroup) {
+        // console.log('waitGroup', isUploadWaitImage)
+        const url = baseUrl + message.slice(1, -1)
+        const img = `.image-fullsize-${messageData.id}`
+        console.log(url)
+        console.log(messageData);
+
+        messageDiv.classList.remove('justify-content-end')
+        messageDiv.classList.add('justify-content-start', 'wrap-user', 'container-image')
+
+        messageTextDiv.innerHTML = (`
+        <div class="wrap-image-wait">
+            <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
+            <img src="${url}" class="image-fullsize-${messageData.id} image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+            ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}"></img>
+        </div>
+        `)
+
+        // modal show fullsize image
+        createModal(img, url)
+    }
+
+    if (isUploadedGroup) {
+        // console.log('sendedGroup', isUploadedGroup)
+        console.log(messageData)
+        const url = baseUrl + message
+        const img = `.image-fullsize-${messageData.id}`
+
+        messageDiv.classList.add('d-flex', 'flex-row', 'justify-content-' + (isCurrentUser ? 'end' : 'start'), 'wrap-user')
+
+        messageTextDiv.innerHTML = (`
+            <img src="${url}" class="image-fullsize-${messageData.id} image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+            ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}"></img>
+        `)
+
+        $('.container-image').remove()
+
+        // modal show fullsize image
+        createModal(img, url)
+    }
+
     // create text time
     const timestampP = document.createElement('p')
     timestampP.classList.add('d-none', 'small', 'ms-3', 'mb-3', 'rounded-3', 'text-muted')
@@ -1245,7 +1313,6 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 
     const tooltipTime = timestampP.innerHTML = messageData && messageData.createdAt ?
         `${moment(messageData.createdAt).format('HH:mm')} ${moment(messageData.createdAt).format('MMM DD, YYYY')}` : ''
-    // messageTextDiv.firstElementChild.setAttribute('data-tooltip-time-group', `${tooltipTime}`)
 
     //tippy time
     tippy(messageTextDiv, {
@@ -1271,51 +1338,61 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 }
 
 //send mess
-function sendMessage() {
-    const messageContent = messageInput.value.trim()
+function sendMessage(data) {
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    const path = data.data.content.replace('public/', "")
+    console.log(path);
 
-    if (messageContent) {
-        const message = {
-            "cID": dataUser.cid,
-            // "displayName": '',
-            // 'mediaID': ,
-            "message": JSON.stringify(messageContent),
-            "type": 'text',
-            "userID": Number(dataUser.userID),
-            "userName": userInfo.profile.name_first
+    if (data.data) {
+        switch (data.data.type) {
+            case "image":
+                const message = {
+                    "cID": Number(data.data.cID),
+                    "displayName": data.data.displayName,
+                    'mediaID': data.data.id,
+                    "message": path,
+                    "type": data.data.type,
+                    "userID": Number(dataUser.userID),
+                    "userName": userInfo.profile.name_first
+                }
+                socket.emit("push2talk_send_chat", message, (err, res) => {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                        console.log(res)
+                        displayedMessages.push(res.id)
+                    }
+                })
+                break
+            case "audio":
+
+                break
+            case "video":
+
+                break
+            default:
+                break
         }
-        socket.emit("push2talk_send_msg", JSON.stringify(message), (err, res) => {
-            if (err) {
-                console.log(err)
-            } else {
-                console.log(res);
-                displayedMessages.push(res.id)
-            }
-        })
-
-        // Reset the input field
-        messageInput.value = ''
 
         emoji.style.display = 'none'
     }
 }
 
-sendMessageButton.addEventListener('click', () => {
-    if (isGroup === true) {
-        sendMessage()
-    }
-})
+// sendMessageButton.addEventListener('click', () => {
+//     if (isGroup === true) {
+//         sendMessage(data)
+//     }
+// })
 
-messageInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault()
+// messageInput.addEventListener('keypress', (event) => {
+//     if (event.key === 'Enter' && !event.shiftKey) {
+//         event.preventDefault()
 
-        if (isGroup === true) {
-            sendMessage()
-        }
-    }
-})
+//         if (isGroup === true) {
+//             sendMessage(data)
+//         }
+//     }
+// })
 
 //tippy Louout
 tippy('.button-logout', {
