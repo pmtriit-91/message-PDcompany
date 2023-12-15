@@ -1011,8 +1011,8 @@ groupSurecommand.addEventListener('click', () => {
             console.log('join room success')
         }
     })
-    messageInput.style.visibility = 'hidden'
-    $('#wrap-emoji').hide()
+    // messageInput.style.visibility = 'hidden'
+    // $('#wrap-emoji').hide()
 
     // create head-img
     $('.custom-img-head').html(`
