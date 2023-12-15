@@ -20,7 +20,7 @@ console.log(dataUser);
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
 localStorage.setItem('userID', randomUser)
-
+let isAttack = false
 //state lastID và trạng thái event scrollTop
 let isScrolling = false
 
@@ -279,8 +279,7 @@ axios.post(urlFullInfo, {
         console.log(error)
     })
 
-//
-
+//socket on
 socket.on('connect', () => {
     console.log("socket initialized successfully ✅")
 
@@ -359,15 +358,16 @@ socket.on('connect', () => {
     })
 })
 
-//up image 1-1
+//up media 1-1
 let pathMedia
-let isImageSent = false
+let isMediaSend = false
+
 function sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, type) {
-    if (!isGroup && !isImageSent) {
+    if (!isGroup && !isMediaSend) {
         const activeCard = document.querySelector('.card-friend.active')
         if (activeCard) {
             sendMessagePrivate(friend.id, friend, currentNewChatDiv, mediaID, pathMedia, type)
-            isImageSent = true
+            isMediaSend = true
         } else {
             console.log('loi up anh')
         }
@@ -407,7 +407,7 @@ function uploadFile(file, friend) {
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
                     sendMessageButton.removeEventListener('click', sendImage)
-                    isImageSent = false
+                    isMediaSend = false
                 })
 
                 messageInput.disabled = true
@@ -415,12 +415,12 @@ function uploadFile(file, friend) {
 
                 // func send image
                 function sendImage() {
-                    if (!isImageSent) {
+                    if (!isMediaSend) {
                         sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, type)
                         messageInput.disabled = false
                     }
                 }
-                isImageSent = false
+                isMediaSend = false
             } else {
                 console.error('Upload thất bại.')
             }
@@ -431,9 +431,10 @@ function uploadFile(file, friend) {
     xhr.send(data)
 }
 
-//upload image group
+//upload media group
 let isMediaSendGroup = false
 let dataMedia
+
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -452,46 +453,40 @@ function uploadFileGroup(file) {
                 console.log('Upload thành công!')
                 pathMedia = JSON.stringify(dataMedia.data.content.replace('public/', ''))
                 const type = dataMedia.data.type
-
+                isAttack = true
                 sendMessageButton.focus()
                 isUploadWaitGroup = true
                 isUploadedGroup = false
+                // messageInput.disabled = true
 
                 const processMedia = () => {
                     $(document).on('click', '.btn-del-image', function () {
                         const mediaWrapper = $(this).closest('.container-image')
                         mediaWrapper.remove()
+                        sendMessageButton.removeEventListener('click', sendMsg)
+                        // messageInput.disabled = false
+
                         // remove event click btn-del
                         $(document).off('click', '.btn-del-image')
                         isMediaSendGroup = false
                     })
 
                     addMessageToChat(pathMedia, true, false, dataMedia, isUploadWaitGroup, isUploadedGroup, type)
-                    sendMessageButton.addEventListener('click', () => {
+                    sendMessageButton.addEventListener('click', sendMsg)
+
+                    // func send image
+                    function sendMsg() {
                         if (isGroup && !isMediaSendGroup) {
                             sendMessage(dataMedia)
                             isMediaSendGroup = true
+                            // messageInput.disabled = false
+                            isAttack = false
                         }
-                    })
+                    }
                     isMediaSendGroup = false
                 }
 
                 processMedia()
-
-                // switch (type) {
-                //     case "image":
-                //         processMedia()
-                //         break
-                //     case "audio":
-                //         processMedia()
-                //         break
-                //     case "video":
-                //         processMedia()
-                //         break
-                //     default:
-                //         break
-                // }
-
             } else {
                 console.error('Upload thất bại.')
             }
@@ -1113,13 +1108,8 @@ if (isGroup) {
             getHistoryMessagesGroup()
             getLastMessageGroup()
 
-            messageInput.style.visibility = 'hidden'
-            $('#wrap-emoji').hide()
-
-            // const activeCard = document.querySelector('.card-surecommand.active')
-            // if (activeCard) {
-            //     console.log('aa');
-            // }
+            // messageInput.style.visibility = 'hidden'
+            // $('#wrap-emoji').hide()
         }
     })
 }
@@ -1258,6 +1248,14 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
                 `)
             }
             break
+        case 'text':
+            {
+                messageTextDiv.innerHTML = (`
+                <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
+                ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${messageData.message}</p>
+                `)
+            }
+            break
         default:
             break
     }
@@ -1381,38 +1379,37 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 
 //send mess
 function sendMessage(data) {
-    console.log(data);
+    const messageContent = messageInput.value.trim()
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
-    const path = data.data.content.replace('public/', "")
-    console.log(path)
-    let message
-    const dataMsg = JSON.stringify({
-        _id: data.data.id,
-        displayName: data.data.displayName,
-        duration: 0,
-        path: path
-    })
-    const emitSendMsgGroup = (dataMedia) => {
-        message = {
-            "cID": Number(data.data.cID),
-            "displayName": data.data.displayName,
-            'mediaID': data.data.id,
-            "message": dataMedia,
-            "type": data.data.type,
-            "userID": Number(dataUser.userID),
-            "userName": userInfo.profile.name_first
-        }
-        socket.emit("push2talk_send_chat", message, (err, res) => {
-            if (err) {
-                console.log(err)
-            } else {
-                console.log(res)
-                displayedMessages.push(res.id)
-            }
-        })
-    }
 
-    if (data.data) {
+    let message
+    if (data) {
+        const path = data.data.content.replace('public/', "")
+        const dataMsg = JSON.stringify({
+            _id: data.data.id,
+            displayName: data.data.displayName,
+            duration: 0,
+            path: path
+        })
+        const emitSendMsgGroup = (dataMedia) => {
+            message = {
+                "cID": Number(data.data.cID),
+                "displayName": data.data.displayName,
+                'mediaID': data.data.id,
+                "message": dataMedia,
+                "type": data.data.type,
+                "userID": Number(dataUser.userID),
+                "userName": userInfo.profile.name_first
+            }
+            socket.emit("push2talk_send_chat", message, (err, res) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log(res)
+                    displayedMessages.push(res.id)
+                }
+            })
+        }
         switch (data.data.type) {
             case "image":
                 emitSendMsgGroup(path)
@@ -1428,23 +1425,45 @@ function sendMessage(data) {
 
         emoji.style.display = 'none'
     }
+
+    if (messageContent) {
+        message = {
+            "cID": Number(dataUser.cid),
+            "displayName": '',
+            'mediaID': 0,
+            "message": messageContent,
+            "type": 'text',
+            "userID": Number(dataUser.userID),
+            "userName": userInfo.profile.name_first
+        }
+        socket.emit("push2talk_send_chat", message, (err, res) => {
+            if (err) {
+                console.log(err)
+            } else {
+                console.log(res)
+                displayedMessages.push(res.id)
+
+                messageInput.value = ''
+            }
+        })
+    }
 }
 
-// sendMessageButton.addEventListener('click', () => {
-//     if (isGroup === true) {
-//         sendMessage(data)
-//     }
-// })
+sendMessageButton.addEventListener('click', () => {
+    if (isGroup === true && !isAttack) {
+        sendMessage()
+    }
+})
 
-// messageInput.addEventListener('keypress', (event) => {
-//     if (event.key === 'Enter' && !event.shiftKey) {
-//         event.preventDefault()
+messageInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault()
 
-//         if (isGroup === true) {
-//             sendMessage(data)
-//         }
-//     }
-// })
+        if (isGroup === true && !isAttack) {
+            sendMessage()
+        }
+    }
+})
 
 //tippy Louout
 tippy('.button-logout', {
