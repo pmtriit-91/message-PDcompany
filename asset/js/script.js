@@ -432,18 +432,8 @@ function uploadFile(file, friend) {
 }
 
 //upload image group
-let isImageSentGroup
-function sendImageMessageGroup(data) {
-    if (isGroup && !isImageSentGroup) {
-        const activeCard = document.querySelector('.card-surecommand.active')
-        if (activeCard) {
-            sendMessage(data)
-            isImageSentGroup = true
-        } else {
-            console.log('loi up anh')
-        }
-    }
-}
+let isImageSentGroup = false
+let dataMedia
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -457,12 +447,11 @@ function uploadFileGroup(file) {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
-            const data = JSON.parse(xhr.responseText)
+            dataMedia = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
                 console.log('Upload thành công!')
-                console.log('data', data)
-                pathImage = JSON.stringify(data.data.content.replace('public/', ''))
-                const type = data.data.type
+                pathImage = JSON.stringify(dataMedia.data.content.replace('public/', ''))
+                const type = dataMedia.data.type
 
                 sendMessageButton.focus()
                 isUploadWaitGroup = true
@@ -483,14 +472,13 @@ function uploadFileGroup(file) {
                     })
 
                     message = pathImage
-                    addMessageToChat(message, true, false, data, isUploadWaitGroup, isUploadedGroup)
-                    sendMessageButton.addEventListener('click', sendImageGroup)
-                    // func send image
-                    function sendImageGroup() {
-                        if (!isImageSentGroup) {
-                            sendImageMessageGroup(data)
+                    addMessageToChat(message, true, false, dataMedia, isUploadWaitGroup, isUploadedGroup)
+                    sendMessageButton.addEventListener('click', () => {
+                        if (isGroup && !isImageSentGroup) {
+                            sendMessage(dataMedia)
+                            isImageSentGroup = true
                         }
-                    }
+                    })
                     isImageSentGroup = false
                 } else {
                     console.log('mp3/mp4')
@@ -830,6 +818,7 @@ messageInput.addEventListener('keypress', (event) => {
 //click button upload image
 let fileUploader = document.getElementById('file-uploader')
 let isChangeEventAdded = false
+
 $('#open-image-upload').click(function () {
     if (!isChangeEventAdded) {
         fileUploader.addEventListener('change', handleFileChange)
@@ -1269,8 +1258,6 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
         // console.log('waitGroup', isUploadWaitImage)
         const url = baseUrl + message.slice(1, -1)
         const img = `.image-fullsize-${messageData.id}`
-        console.log(url)
-        console.log(messageData);
 
         messageDiv.classList.remove('justify-content-end')
         messageDiv.classList.add('justify-content-start', 'wrap-user', 'container-image')
@@ -1339,6 +1326,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 
 //send mess
 function sendMessage(data) {
+    console.log(data);
     const userInfo = JSON.parse(localStorage.getItem('userInfo'))
     const path = data.data.content.replace('public/', "")
     console.log(path);
