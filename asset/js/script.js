@@ -362,12 +362,13 @@ socket.on('connect', () => {
 let pathMedia
 let isMediaSend = false
 
-function sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, type) {
+function sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, dataMediaPrivate, type) {
     if (!isGroup && !isMediaSend) {
         const activeCard = document.querySelector('.card-friend.active')
         if (activeCard) {
-            sendMessagePrivate(friend.id, friend, currentNewChatDiv, mediaID, pathMedia, type)
+            sendMessagePrivate(friend.id, friend, currentNewChatDiv, mediaID, pathMedia, dataMediaPrivate, type)
             isMediaSend = true
+            isAttack = false
         } else {
             console.log('loi up anh')
         }
@@ -383,41 +384,42 @@ function uploadFile(file, friend) {
     data.append('images', file)
 
     const xhr = new XMLHttpRequest()
-
+    let dataMediaPrivate
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
             console.log(JSON.parse(xhr.responseText))
-            const dataImage = JSON.parse(xhr.responseText)
+            dataMediaPrivate = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
                 // console.log('Upload thành công!')
-                // console.log('dataImage', dataImage)
-                pathMedia = dataImage.data.content.replace('public/', '')
-                const type = dataImage.data.type
-                const mediaID = dataImage.data.id
+                console.log('dataMediaPrivate', dataMediaPrivate)
+                pathMedia = dataMediaPrivate.data.content.replace('public/', '')
+                const type = dataMediaPrivate.data.type
+                const mediaID = dataMediaPrivate.data.id
                 isUploadWaitImage = true
                 isUploaded = false
-                addMessPrivate(pathMedia, currentNewChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
+                addMessPrivate(pathMedia, currentNewChatDiv, friend, true, false, isUploadWaitImage, isUploaded, type)
                 sendMessageButton.focus()
+                isAttack = true
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
                     const imageWrapper = $(this).closest('.container-image')
                     imageWrapper.remove()
-                    messageInput.disabled = false
+                    // messageInput.disabled = false
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
                     sendMessageButton.removeEventListener('click', sendImage)
                     isMediaSend = false
                 })
 
-                messageInput.disabled = true
+                // messageInput.disabled = true
                 sendMessageButton.addEventListener('click', sendImage)
 
                 // func send image
                 function sendImage() {
                     if (!isMediaSend) {
-                        sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, type)
-                        messageInput.disabled = false
+                        sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, dataMediaPrivate, type)
+                        // messageInput.disabled = false
                     }
                 }
                 isMediaSend = false
@@ -497,6 +499,31 @@ function uploadFileGroup(file) {
     xhr.send(data)
 }
 
+//click button upload image (all) 
+let fileUploader = document.getElementById('file-uploader')
+let isChangeEventAdded = false
+
+$('#open-image-upload').click(function () {
+    if (!isChangeEventAdded) {
+        fileUploader.addEventListener('change', handleFileChange)
+        isChangeEventAdded = true
+    }
+    fileUploader.click()
+})
+
+function handleFileChange() {
+    console.log(fileUploader.files[0])
+    const file = fileUploader.files[0]
+    if (file) {
+        isGroup ? uploadFileGroup(file) : uploadFile(file, currentFriend)
+    }
+    // clean file value
+    fileUploader.value = null
+
+    fileUploader.removeEventListener('change', handleFileChange)
+    isChangeEventAdded = false
+}
+
 // ***** CHAT 1-1 *****
 const unsentMessages = {}
 let currentFriendID = null
@@ -543,7 +570,7 @@ socket.emit('get_unread_count', infoCount, (err, data) => {
     })
 })
 //send mess 1-1
-function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, type) {
+function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, dataMediaPrivate, type) {
     const messageContent = messageInput.value.trim()
 
     if (messageContent) {
@@ -552,6 +579,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, ty
             "receiverid": friendID,
             "cid": dataUser.cid,
             "message": messageContent,
+            "type": "text"
         }
 
         socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
@@ -610,192 +638,64 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, ty
             isUploadWaitImage = false
             const imageWrapper = $('.btn-del-image').closest('.container-image')
             imageWrapper.remove()
-            addMessPrivate(pathMedia, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded)
+            addMessPrivate(pathMedia, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded, type)
+        })
+    }
+
+    if (type === 'audio') {
+        console.log('audio1-1', dataMediaPrivate)
+        const message = JSON.stringify({
+            _id: dataMediaPrivate.data.id,
+            displayName: dataMediaPrivate.data.displayName,
+            duration: 0,
+            path: pathMedia
+        })
+        const info = {
+            "senderid": dataUser.userID,
+            "receiverid": friendID,
+            "cid": dataUser.cid,
+            "message": message,
+            mediaID,
+            type
+        }
+        socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
+            const dataMedia = JSON.parse(data.msg.message)
+            const path = dataMedia.path
+            isUploaded = true
+            isUploadWaitImage = false
+            const imageWrapper = $('.btn-del-image').closest('.container-image')
+            imageWrapper.remove()
+            addMessPrivate(path, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded, type)
+        })
+    }
+
+    if (type === 'video') {
+        console.log('audio1-1', dataMediaPrivate)
+        const message = JSON.stringify({
+            _id: dataMediaPrivate.data.id,
+            displayName: dataMediaPrivate.data.displayName,
+            duration: 0,
+            path: pathMedia
+        })
+        const info = {
+            "senderid": dataUser.userID,
+            "receiverid": friendID,
+            "cid": dataUser.cid,
+            "message": message,
+            mediaID,
+            type
+        }
+        socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
+            const dataMedia = JSON.parse(data.msg.message)
+            const path = dataMedia.path
+            isUploaded = true
+            isUploadWaitImage = false
+            const imageWrapper = $('.btn-del-image').closest('.container-image')
+            imageWrapper.remove()
+            addMessPrivate(path, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded, type)
         })
     }
 }
-
-// const handleRenderCardFriend = (friendData) => {
-//     return
-//     const arrayPrivate = []
-//     // const arrayFriendID = []
-
-//     friendData.forEach((friend) => {
-//         arrayFriendID.push(friend.id)
-
-//         //create wrapper-private-chat
-//         const cardFriend = $(`#friend-${friend.id}`)
-//         // const cardFriend = document.getElementById(`friend-${friend.id}`)
-//         const newChatDiv = $("<div>")
-//             .addClass(`wrapper-private-chat-${friend.id}`)
-//             .css({
-//                 'flex': '1',
-//                 'padding-left': '20px',
-//                 'padding-right': '20px',
-//                 'overflow-y': 'scroll',
-//             })
-
-//         //get lastInfo chat 1-1
-//         getLastMessPrivate(friend, newChatDiv)
-
-//         //create head-img
-//         const headCardImg = $('.custom-img-head')
-
-//         cardFriend.click(() => {
-//             isGroup = false
-//             currentFriend = { ...friend }
-
-//             currentNewChatDiv = newChatDiv
-
-//             console.log('isGroup: ', isGroup)
-//             //call func save mess unsend
-//             saveMessWhenSwitchToFriend(friend.id)
-
-//             //debounce input
-//             function debounce(func, delay) {
-//                 let timer
-//                 return function (...args) {
-//                     const context = this
-//                     clearTimeout(timer)
-//                     timer = setTimeout(() => {
-//                         func.apply(context, args)
-//                     }, delay)
-//                 }
-//             }
-
-//             let typingTimer
-//             //debounce typing
-//             const debounceTypingEvent = debounce((event) => {
-//                 const inputValue = event.target.value
-//                 const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
-//                 if (inputValue.length > 0) {
-//                     socket.emit('chat_typing', info)
-//                 } else {
-//                     socket.emit('chat_clear_typing', info)
-//                 }
-//             }, 1200)
-
-//             // func typing
-//             const handleTyping = (event) => {
-//                 clearTimeout(typingTimer)
-
-//                 typingTimer = setTimeout(() => {
-//                     const info = { receiverid: friend.id, senderid: Number(dataUser.userID) }
-//                     socket.emit('chat_clear_typing', info)
-//                 }, 10000)
-
-//                 debounceTypingEvent(event)
-//             }
-
-//             messageInput.addEventListener('input', (event) => {
-//                 handleTyping(event)
-//             })
-
-//             //action switch headCardImg
-//             headCardImg.html(`
-//             <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
-//             <div class="card-head-custom">
-//                 <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
-//             </div>
-//             `)
-
-//             //action hide/show wrapper-private-chat
-//             arrayPrivate.forEach(nodeElm => {
-//                 nodeElm != currentNewChatDiv ? nodeElm.hide() : nodeElm.show()
-//             })
-
-//             $("#wrapper-chat").after(currentNewChatDiv)
-//             arrayPrivate.push(currentNewChatDiv)
-//             // Scroll về cuối cùng của newChatDiv
-//             const scrollHeight = currentNewChatDiv[0].scrollHeight
-//             const clientHeight = currentNewChatDiv[0].clientHeight
-//             currentNewChatDiv[0].scrollTop = scrollHeight
-
-//             //xóa active va hide group
-//             groupSurecommand.classList.remove('active')
-//             $("#wrapper-chat").hide()
-
-//             activeCardFriends.forEach(activeCard => {
-//                 activeCard.removeClass('active')
-//             })
-
-//             // active
-//             cardFriend.addClass('active')
-//         })
-//         // // // tra thong tin socket bên phía user nhận
-//         // socket.on("socket_result", (data) => {
-//         //     console.log('data event socket_result', data)
-//         //     if (data.key === "chat_new_message" && Number(data.data.senderid) === Number(friend.id)) {
-//         //         // getLastMessPrivate(friend, newChatDiv)
-//         //         addMessPrivate(data.data, newChatDiv, friend, false, false)
-
-//         //         //show lastmess card-friend
-//         //         socket.emit('load_last_mess', {
-//         //             senderid: friend.id, // friend.id
-//         //             receiverid: Number(dataUser.userID) //userId
-//         //         }, (err, data) => {
-//         //             const timeString = data[0].send_timestamp
-//         //             const time = data[0] && data[0].send_timestamp ?
-//         //                 moment(timeString).format("HH:mm MMM DD, YYYY") : ''
-//         //             document.getElementById(`card-time-${friend.id}`).innerHTML = time
-
-//         //             if (Number(data[0].senderid) === Number(dataUser.userID)) {
-//         //                 $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
-//         //             } else {
-//         //                 $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
-//         //             }
-//         //         })
-
-//         //         //đếm tin nhắn chưa đọc
-//         //         const senderids = JSON.parse(localStorage.getItem('arrayFriendID'))
-//         //         const infoCount = {
-//         //             senderids: senderids,
-//         //             receiverid: Number(dataUser.userID)
-//         //         }
-//         //         socket.emit('get_unread_count', infoCount, (err, data) => {
-//         //             data.forEach((elm) => {
-//         //                 if (senderids.includes(elm.senderid)) {
-//         //                     const friendImgDiv = $(`#friend-img-${elm.senderid}`)
-//         //                     const noteMessDiv = $('<div>').addClass(`note-mess-${elm.senderid}`)
-//         //                     const noteMess = $('<p>').text(elm.unread)
-
-//         //                     friendImgDiv.append(noteMessDiv.append(noteMess))
-
-//         //                     //đánh dấu đã đọc tin nhắn
-//         //                     // //
-//         //                     const cardFriend = document.getElementById(`friend-${elm.senderid}`)
-//         //                     cardFriend.addEventListener('click', () => {
-//         //                         const infoRead = {
-//         //                             senderid: Number(dataUser.userID),
-//         //                             receiverid: elm.senderid
-//         //                         }
-//         //                         socket.emit('mark_as_read', infoRead, (err, data) => {
-//         //                             noteMessDiv.remove()
-//         //                         })
-//         //                     })
-
-//         //                 }
-//         //             })
-//         //         })
-//         //         localStorage.setItem('arrayCurrentLastIdAndFriendId', JSON.stringify([data.data.id, Number(data.data.receiverid)]))
-//         //     }
-
-//         //     //typing
-//         //     const cardBody = $(`#card-body-${data.data.senderid}`)
-//         //     const chatBubble = cardBody.find('.chat-bubble')
-//         //     if (data.key === "chat_typing") {
-//         //         // ẩn tất cả các phần tử <p> có trong card-body
-//         //         cardBody.find('p').hide()
-//         //         chatBubble.show()
-//         //     } else {
-//         //         cardBody.find('p').show()
-//         //         chatBubble.hide()
-//         //     }
-//         // })
-//         activeCardFriends.push(cardFriend)
-//     })
-// }
-// getListFriends(token, dataUser, urlFullInfo, handleRenderCardFriend)
 
 sendMessageButton.addEventListener('click', () => {
     if (!isGroup) {
@@ -817,32 +717,6 @@ messageInput.addEventListener('keypress', (event) => {
         }
     }
 })
-
-//click button upload image
-let fileUploader = document.getElementById('file-uploader')
-let isChangeEventAdded = false
-
-$('#open-image-upload').click(function () {
-    if (!isChangeEventAdded) {
-        fileUploader.addEventListener('change', handleFileChange)
-        isChangeEventAdded = true
-    }
-    fileUploader.click()
-})
-
-function handleFileChange() {
-    console.log(fileUploader.files[0])
-    const file = fileUploader.files[0]
-    if (file) {
-        isGroup ? uploadFileGroup(file) : uploadFile(file, currentFriend)
-    }
-    // clean file value
-    fileUploader.value = null
-
-    fileUploader.removeEventListener('change', handleFileChange)
-    isChangeEventAdded = false
-}
-
 
 const getLastMessPrivate = (friend, newChatDiv) => {
     //get lastInfo chat 1-1
@@ -950,8 +824,9 @@ function closeModal() {
     modal.style.display = 'none'
 }
 // add mess private UI
-const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, isUploadWaitImage, isUploaded) => {
+const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScrolling, isUploadWaitImage, isUploaded, type) => {
     $(document).ready(function () {
+        // console.log('dataall', data);
         var messageDiv = $("<div>")
         messageDiv.css("overflow-wrap", "anywhere")
         var nameUser = $("<p>")
@@ -965,51 +840,119 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         }
 
         if (isUploadWaitImage) {
-            const pathMedia = data
-            const urlImage = baseUrl + pathMedia
-            const img = '.image-fullsize'
-            // console.log(urlImage)
-
+            let url = baseUrl + data
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
-            messageTextDiv.html(`<div class="wrap-image-wait">
-                <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
-                <img src="${urlImage}" class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
-                </img>
-            </div>`)
-            // modal show fullsize image
-            createModal(img, urlImage)
+            switch (type) {
+                case "image":
+                    const img = '.image-fullsize'
+
+                    messageTextDiv.html(`<div class="wrap-image-wait">
+                        <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
+                        <img src="${url}" class="image-fullsize image-wait text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                        ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                        </img>
+                    </div>`)
+                    // modal show fullsize image
+                    createModal(img, url)
+                    break
+                case "audio":
+                    messageTextDiv.html(`
+                        <div class="wrap-image-wait">
+                            <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
+                            <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                                ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                                <source src="${url}" type="audio/mpeg">
+                            </audio>
+                        </div>`)
+                    break
+                case "video":
+                    messageTextDiv.html(`
+                        <div class="wrap-image-wait">
+                            <i class="fa-solid fa-trash fa-xs btn-del-image"></i>
+                            <video controls class="video text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                                ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                                <source src="${url}" type="video/mp4">
+                            </video>
+                        </div>`)
+                    break
+                default:
+                    break;
+            }
         }
 
         if (isUploaded) {
-            const pathMedia = data.replace('public/', '')
-            const urlImage = baseUrl + pathMedia
-            const img = '.image-fullsize'
-            // console.log(urlImage);
-
+            let pathMedia = data.replace('public/', '')
+            let url = baseUrl + pathMedia
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
-            messageTextDiv.html(`
-                <img src=${urlImage} class="image-fullsize image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
-                </img>`)
+            switch (type) {
+                case "image":
+                    const img = '.image-fullsize'
 
-            // modal show fullsize image
-            createModal(img, urlImage)
+                    messageTextDiv.html(`
+                        <img src=${url} class="image-fullsize image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                        ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                        </img>`)
+
+                    // modal show fullsize image
+                    createModal(img, url)
+                    break
+                case "audio":
+                    messageTextDiv.html(`
+                        <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                            ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                            <source src="${url}" type="audio/mpeg">
+                        </audio>`)
+                    break
+                case "video":
+                    messageTextDiv.html(`
+                        <video controls class="video text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                            ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                            <source src="${url}" type="video/mp4">
+                        </video>`)
+                    break
+                default:
+                    break;
+            }
         }
 
-        if (data.type && data.type === 'image') {
-            const pathMedia = data.message
-            const urlImage = baseUrl + pathMedia
-            const img = `#image-${friend.id}-${data.id}`
+        switch (data.type) {
+            case "image":
+                const pathMedia = data.message
+                const urlImage = baseUrl + pathMedia
+                const img = `#image-${friend.id}-${data.id}`
 
-            messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
-            messageTextDiv.html(`
-                <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
-                </img>`)
+                messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+                messageTextDiv.html(`
+                    <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                    </img>`)
 
-            // modal show fullsize image
-            createModal(img, urlImage)
+                // modal show fullsize image
+                createModal(img, urlImage)
+                break
+            case "audio":
+                const dataAudio = JSON.parse(data.message)
+                const urlaudio = baseUrl + dataAudio.path
+
+                messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+                messageTextDiv.html(`
+                    <audio controls class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                        ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                        <source src="${urlaudio}" type="audio/mpeg">
+                    </audio>`)
+                break
+            case "video":
+                const dataVideo = JSON.parse(data.message)
+                const urlvideo = baseUrl + dataVideo.path
+
+                messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+                messageTextDiv.html(`
+                    <video controls class="video text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
+                        ${isCurrentUser ? 'text-white rounded-3' : 'rounded-3'}">
+                        <source src="${urlvideo}" type="video/mp4">
+                    </video>`)
+            default:
+                break
         }
 
         var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
