@@ -327,6 +327,10 @@
     animation: fadeIn 1s ease-in-out forwards;
 }
 
+.container-wait-group {
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

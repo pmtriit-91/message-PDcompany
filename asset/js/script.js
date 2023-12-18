@@ -520,6 +520,7 @@ function handleFileChange() {
             const messageDiv = $("<div>")
             //UX create container image wait
             let divChatCurrent = currentFriend.divChat
+            messageDiv.css("overflow-wrap", "anywhere")
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image container-wait")
             messageDiv.html(`
                 <svg class="loading_svg" version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -550,6 +551,7 @@ function handleFileChange() {
         if (isGroup) {
             // chatWrapper
             const messageDiv = document.createElement('div')
+            messageDiv.style.overflowWrap = 'anywhere'
             messageDiv.classList.add('text-start', 'justify-content-start', 'wrap-user', 'container-image', 'container-wait-group')
             messageDiv.innerHTML = (`<svg class="loading_svg" version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                 viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
@@ -574,6 +576,7 @@ function handleFileChange() {
             </svg>`)
 
             chatWrapper.append(messageDiv)
+            chatWrapper.scrollTop = chatWrapper.scrollHeight
         }
 
         //logic upload
@@ -930,6 +933,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             let pathMedia = data.replace('public/', '')
             let url = baseUrl + pathMedia
             messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
+
             switch (type) {
                 case "image":
                     const img = '.image-fullsize'
@@ -1254,6 +1258,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
         messageDiv.classList.remove('justify-content-end')
         messageDiv.classList.add('justify-content-start', 'wrap-user', 'container-image')
         $('.container-wait-group').remove()
+        chatWrapper.scrollTop = chatWrapper.scrollHeight
 
         switch (type) {
             case "image":
@@ -1304,6 +1309,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
     }
 
     if (isUploadedGroup) {
+        chatWrapper.scrollTop = chatWrapper.scrollHeight
         switch (type) {
             case "image":
                 // console.log('sendedGroup', isUploadedGroup)
