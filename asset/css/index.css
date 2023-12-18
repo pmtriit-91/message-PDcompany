@@ -12,6 +12,7 @@
 
 .wrapper-left {
     padding: 0;
+    height: 100vh;
 }
 
 .wrapper-left .header {
@@ -230,6 +231,12 @@
 
 .wrap-send {
     padding-left: 20px;
+
+    /*  */
+    position: sticky;
+    bottom: 0;
+    z-index: 9999;
+    background: #fff;
 }
 
 .icon-emoji:hover {

@@ -152,7 +152,7 @@ axios.post(urlFullInfo, {
                             <div class="card-body" id="card-body-${friend.id}">
                                 <h5 class="card-title">${friend.f_name}</h5>
                                 <p class="card-text card-text-sub"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
-                                <p class="card-text card-text-sub"><small id="card-time-${friend.id}" class="text-body-secondary text-time">time</small></p>
+                                <p class="card-text card-text-sub text-start"><small id="card-time-${friend.id}" class="text-body-secondary text-time">time</small></p>
                                 <div class="chat-bubble">
                                     <div class="typing">
                                         <div class="dot"></div>
@@ -1086,6 +1086,9 @@ groupSurecommand.addEventListener('click', () => {
     activeCardFriends.forEach(activeCard => {
         activeCard.classList.remove('active')
     })
+
+    //
+    chatWrapper.scrollIntoView({ behavior: 'smooth' })
 
     //get lastmess
     getLastMessageGroup()
