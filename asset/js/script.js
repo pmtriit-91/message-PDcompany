@@ -515,6 +515,68 @@ function handleFileChange() {
     console.log(fileUploader.files[0])
     const file = fileUploader.files[0]
     if (file) {
+
+        if (!isGroup) {
+            const messageDiv = $("<div>")
+            //UX create container image wait
+            let divChatCurrent = currentFriend.divChat
+            messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image container-wait")
+            messageDiv.html(`
+                <svg class="loading_svg" version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                    viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+                    <rect x="20" y="40" width="4" height="10" fill="#fff">
+                        <animateTransform attributeType="xml"
+                        attributeName="transform" type="translate"
+                        values="0 0; 0 20; 0 0"
+                        begin="0" dur="1.6s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="30" y="40" width="4" height="10" fill="#fff">
+                        <animateTransform attributeType="xml"
+                        attributeName="transform" type="translate"
+                        values="0 0; 0 20; 0 0"
+                        begin="0.2s" dur="1.6s" repeatCount="indefinite" />
+                    </rect>
+                    <rect x="40" y="40" width="4" height="10" fill="#fff">
+                        <animateTransform attributeType="xml"
+                        attributeName="transform" type="translate"
+                        values="0 0; 0 20; 0 0"
+                        begin="0.4s" dur="1.6s" repeatCount="indefinite" />
+                    </rect>
+                </svg>
+            `)
+            divChatCurrent.append(messageDiv)
+        }
+
+        if (isGroup) {
+            // chatWrapper
+            const messageDiv = document.createElement('div')
+            messageDiv.classList.add('text-start', 'justify-content-start', 'wrap-user', 'container-image', 'container-wait-group')
+            messageDiv.innerHTML = (`<svg class="loading_svg" version="1.1" id="L9" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+                <rect x="20" y="40" width="4" height="10" fill="#fff">
+                    <animateTransform attributeType="xml"
+                    attributeName="transform" type="translate"
+                    values="0 0; 0 20; 0 0"
+                    begin="0" dur="1.6s" repeatCount="indefinite" />
+                </rect>
+                <rect x="30" y="40" width="4" height="10" fill="#fff">
+                    <animateTransform attributeType="xml"
+                    attributeName="transform" type="translate"
+                    values="0 0; 0 20; 0 0"
+                    begin="0.2s" dur="1.6s" repeatCount="indefinite" />
+                </rect>
+                <rect x="40" y="40" width="4" height="10" fill="#fff">
+                    <animateTransform attributeType="xml"
+                    attributeName="transform" type="translate"
+                    values="0 0; 0 20; 0 0"
+                    begin="0.4s" dur="1.6s" repeatCount="indefinite" />
+                </rect>
+            </svg>`)
+
+            chatWrapper.append(messageDiv)
+        }
+
+        //logic upload
         isGroup ? uploadFileGroup(file) : uploadFile(file, currentFriend)
     }
     // clean file value
@@ -642,8 +704,7 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, da
         })
     }
 
-    if (type === 'audio') {
-        console.log('audio1-1', dataMediaPrivate)
+    const emditMediaPrivate = () => {
         const message = JSON.stringify({
             _id: dataMediaPrivate.data.id,
             displayName: dataMediaPrivate.data.displayName,
@@ -669,31 +730,14 @@ function sendMessagePrivate(friendID, friend, newChatDiv, mediaID, pathMedia, da
         })
     }
 
+    if (type === 'audio') {
+        console.log('audio1-1', dataMediaPrivate)
+        emditMediaPrivate()
+    }
+
     if (type === 'video') {
         console.log('audio1-1', dataMediaPrivate)
-        const message = JSON.stringify({
-            _id: dataMediaPrivate.data.id,
-            displayName: dataMediaPrivate.data.displayName,
-            duration: 0,
-            path: pathMedia
-        })
-        const info = {
-            "senderid": dataUser.userID,
-            "receiverid": friendID,
-            "cid": dataUser.cid,
-            "message": message,
-            mediaID,
-            type
-        }
-        socket.emit("chat_send_message", JSON.stringify(info), (err, data) => {
-            const dataMedia = JSON.parse(data.msg.message)
-            const path = dataMedia.path
-            isUploaded = true
-            isUploadWaitImage = false
-            const imageWrapper = $('.btn-del-image').closest('.container-image')
-            imageWrapper.remove()
-            addMessPrivate(path, newChatDiv, friend, true, false, isUploadWaitImage, isUploaded, type)
-        })
+        emditMediaPrivate()
     }
 }
 
@@ -841,7 +885,9 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
         if (isUploadWaitImage) {
             let url = baseUrl + data
+            $(".container-wait").remove()
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
+
             switch (type) {
                 case "image":
                     const img = '.image-fullsize'
@@ -1008,7 +1054,7 @@ groupSurecommand.addEventListener('click', () => {
         if (err) {
             console.log('join room error')
         } else {
-            console.log('join room success')
+            console.log('Join the room successfully ✅')
         }
     })
     // messageInput.style.visibility = 'hidden'
@@ -1046,7 +1092,7 @@ if (isGroup) {
         if (err) {
             console.log('join room error')
         } else {
-            console.log('join room success')
+            console.log('Join the room successfully ✅')
 
             getHistoryMessagesGroup()
             getLastMessageGroup()
@@ -1207,6 +1253,8 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
         let url
         messageDiv.classList.remove('justify-content-end')
         messageDiv.classList.add('justify-content-start', 'wrap-user', 'container-image')
+        $('.container-wait-group').remove()
+
         switch (type) {
             case "image":
                 // console.log('waitGroup', isUploadWaitImage)

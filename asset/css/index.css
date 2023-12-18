@@ -292,7 +292,7 @@
 }
 
 .image-wait {
-    width: 90px;
+    width: 150px;
     height: auto;
     object-fit: contain;
     cursor: pointer;
@@ -309,6 +309,34 @@
 .video {
     max-width: 250px;
     border-radius: 16px !important;
+}
+
+/* image */
+.loading_svg {
+    max-height: 100px;
+}
+
+.container-image {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding-left: 10px !important;
+    border-radius: 8px;
+    min-height: 70px;
+}
+
+.container-wait {
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        /* height: 0; */
+    }
+
+    to {
+        opacity: 1;
+        /* height: 70px; */
+    }
 }
 
 /* wrapper-private-chat */
@@ -406,14 +434,6 @@
         transform: translateY(0px);
         background-color: #B5D9CB;
     }
-}
-
-/* image */
-.container-image {
-    background-color: rgba(0, 0, 0, 0.2);
-    padding-left: 10px !important;
-    border-radius: 8px;
-    min-height: 70px;
 }
 
 /* screen */

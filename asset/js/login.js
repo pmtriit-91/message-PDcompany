@@ -18,7 +18,7 @@ form.addEventListener("submit", function (event) {
     const emailValue = emailInput.value
     const passwordValue = passwordInput.value
 
-    if (emailValue === "tdinhphuoc@gmail.com" && passwordValue === "12345678") {
+    if (emailValue === "test1137@test.com" && passwordValue === "dcb08a8c") {
         axios.post(baseUrl, {
             "head": {
                 "code": 1, // Code 1: login
