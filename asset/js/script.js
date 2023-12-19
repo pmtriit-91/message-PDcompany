@@ -5,6 +5,7 @@ import { randomAvatarURL, randomName } from './randomName.js'
 
 const chatWrapper = document.querySelector('.wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
+const groupSurecommandMobile = document.getElementById('card-surecommand-mobile')
 
 const sendMessageButton = document.getElementById('send-button')
 const messageInput = document.getElementById('message-input')
@@ -110,6 +111,7 @@ var socket = io.connect(baseUrl, {
 let listFriends = []
 const arrayPrivate = []
 const bodyLeft = document.querySelector('#body-left')
+const bodyLeftMobile = document.querySelector('#body-left-mobile')
 axios.post(urlFullInfo, {
     "head": {
         "code": 145, //code 145: list friend
@@ -151,7 +153,7 @@ axios.post(urlFullInfo, {
                         <div class="col-9 col-md-9 d-flex align-items-center">
                             <div class="card-body" id="card-body-${friend.id}">
                                 <h5 class="card-title">${friend.f_name}</h5>
-                                <p class="card-text card-text-sub"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
+                                <p class="card-text card-text-sub text-start"><small id="card-text-${friend.id}" class="text-body-secondary">last message</small></p>
                                 <p class="card-text card-text-sub text-start"><small id="card-time-${friend.id}" class="text-body-secondary text-time">time</small></p>
                                 <div class="chat-bubble">
                                     <div class="typing">
@@ -164,7 +166,13 @@ axios.post(urlFullInfo, {
                         </div>
                     </div>
                 `
-            bodyLeft.appendChild(newCard)
+            if (window.innerWidth <= 576) {
+                bodyLeft.remove()
+                bodyLeftMobile.appendChild(newCard)
+            } else {
+                bodyLeftMobile.remove()
+                bodyLeft.appendChild(newCard)
+            }
 
             //render last mess
             arrayFriendID.push(friend.id)
@@ -263,6 +271,7 @@ axios.post(urlFullInfo, {
 
                 //xóa active va hide group
                 groupSurecommand.classList.remove('active')
+                groupSurecommandMobile.classList.remove('active')
                 $("#wrapper-chat").hide()
 
                 activeCardFriends.forEach(activeCard => {
@@ -1089,10 +1098,58 @@ groupSurecommand.addEventListener('click', () => {
 
     //
     chatWrapper.scrollIntoView({ behavior: 'smooth' })
+    chatWrapper.scrollTop = chatWrapper.scrollHeight
 
     //get lastmess
     getLastMessageGroup()
 })
+
+//
+groupSurecommandMobile.addEventListener('click', () => {
+    isGroup = true
+    console.log(isGroup)
+
+    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
+        if (err) {
+            console.log('join room error')
+        } else {
+            console.log('Join the room successfully ✅')
+        }
+    })
+    // messageInput.style.visibility = 'hidden'
+    // $('#wrap-emoji').hide()
+
+    // create head-img
+    $('.custom-img-head').html(`
+        <div class="col-10 col-md-8 col-lg-6 custom-img custom-img-head">
+        <img src="./asset/image/groupAvatar3.jpeg" class=" img-fluid avatar-group"
+            alt="...">
+        <div class="card-head-custom">
+            <h5 class="card-title" style="text-align: left;">Group Surecommand</h5>
+        </div>
+        </div>`)
+
+    //show lại wrapper-chat và ẩn đi wrapper-chat-group
+    $(document).ready(function () {
+        $("#wrapper-chat").show()
+        $("[class^='wrapper-private-chat-']").hide()
+    })
+
+    //active
+    groupSurecommandMobile.classList.add('active')
+    //remove active 
+    activeCardFriends.forEach(activeCard => {
+        activeCard.classList.remove('active')
+    })
+
+    //
+    chatWrapper.scrollIntoView({ behavior: 'smooth' })
+    chatWrapper.scrollTop = chatWrapper.scrollHeight
+
+    //get lastmess
+    getLastMessageGroup()
+})
+//
 
 if (isGroup) {
     socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {

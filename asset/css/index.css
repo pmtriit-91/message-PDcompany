@@ -430,6 +430,11 @@
 }
 
 
+/* canvas custome */
+.canvas-custome {
+    width: 70% !important;
+}
+
 @keyframes mercuryTypingAnimation {
     0% {
         transform: translateY(0px);
@@ -454,7 +459,46 @@
     }
 }
 
-@media (min-width: 576px) {}
+@media (max-width: 576px) {
+    .card-head {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 9999999;
+        background: #fff;
+        padding-top: 1rem;
+    }
+
+    .body {
+        padding-left: 1rem;
+    }
+
+    .body .card {
+        height: 80px;
+    }
+
+    .body .card .row.row-card-avatar {
+        padding: 4px;
+        flex: 1;
+    }
+
+    .body .card-body {
+        padding-left: 5px;
+    }
+
+    .body .card-body .card-title {
+        margin-bottom: 0;
+        font-size: 1.1rem;
+    }
+
+    .custom-img .img-fluid {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+}
 
 
 @media (min-width: 768px) {
