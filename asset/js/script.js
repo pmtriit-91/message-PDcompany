@@ -1,6 +1,4 @@
 import { randomAvatarURL, randomName } from './randomName.js'
-// import getListFriends from './listFriend.js'
-
 // console.log = function () { }
 
 const chatWrapper = document.querySelector('.wrapper-chat')
@@ -13,15 +11,23 @@ const buttonLogout = document.getElementsByClassName('button-logout')
 const emoji = document.getElementById('emoji')
 let currentFriend = {
 }
-//token
-const token = JSON.parse(localStorage.getItem('token'))
-const dataUser = JSON.parse(localStorage.getItem('dataUser'))
-console.log(dataUser);
+//token and userInfo from app
+const token = JSON.parse(sessionStorage.getItem('token'))
+const dataUser = JSON.parse(sessionStorage.getItem('dataUser'))
+
+// if (!token) {
+//     socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
+//         console.log('Leaving room...', data)
+//     })
+// }
 
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
 localStorage.setItem('userID', randomUser)
+
+//flag attack file
 let isAttack = false
+
 //state lastID và trạng thái event scrollTop
 let isScrolling = false
 
@@ -62,8 +68,17 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location = '/login.html'
     }
     buttonLogout[0].addEventListener('click', () => {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         window.location = '/login.html'
+    })
+
+    //join room
+    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
+        if (err) {
+            console.log('join room error')
+        } else {
+            console.log('Join the room successfully ✅')
+        }
     })
 
     //get full user
@@ -194,9 +209,9 @@ axios.post(urlFullInfo, {
             $(document).on("click", `#friend-${friend.id}`, function () {
                 if (isGroup) {
                     isGroup = false
-                    socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
-                        console.log('Leaving room...', data)
-                    })
+                    // socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
+                    //     console.log('Leaving room...', data)
+                    // })
                     messageInput.style.visibility = 'unset'
                     $('#wrap-emoji').show()
                 }
@@ -412,8 +427,12 @@ function uploadFile(file, friend) {
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
-                    const imageWrapper = $(this).closest('.container-image')
-                    imageWrapper.remove()
+                    if (!isGroup) {
+                        const imageWrapper = $('.container-image')
+                        imageWrapper.remove()
+                    }
+                    // const imageWrapper = $(this).closest('.container-image')
+                    // imageWrapper.remove()
                     // messageInput.disabled = false
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
@@ -791,7 +810,9 @@ const getLastMessPrivate = (friend, newChatDiv) => {
             //last mess
             if (data && data[0]) {
                 if (data[0].senderid === Number(dataUser.userID)) {
-                    $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
+                    console.log(data[0]);
+                    const type = data[0].type === "image" || "audio" || "video"
+                    type ? $(`#card-text-${friend.id}`).text('you: ' + data[0].type) : $(`#card-text-${friend.id}`).text('you: ' + data[0].message)
                 } else {
                     $(`#card-text-${friend.id}`).text(friend.f_name + ': ' + data[0].message)
                 }
@@ -857,7 +878,7 @@ function createModal(img, url) {
     modal.classList.add('modal')
     modal.innerHTML = `
         <span id="close-image" class="close">&times;</span>
-        <img class="modal-content" id="img01">
+        <img class="modal-content" id="img01"></img>
     `
     document.body.appendChild(modal)
     $(document).on('click', img, () => {
@@ -866,6 +887,12 @@ function createModal(img, url) {
     })
     $(document).on('click', '#close-image', () => {
         closeModal()
+    })
+
+    $(document).on('click', '.modal', (event) => {
+        if (event.target === modal) {
+            closeModal()
+        }
     })
 }
 
@@ -1063,13 +1090,13 @@ groupSurecommand.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
 
-    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
-        if (err) {
-            console.log('join room error')
-        } else {
-            console.log('Join the room successfully ✅')
-        }
-    })
+    // socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
+    //     if (err) {
+    //         console.log('join room error')
+    //     } else {
+    //         console.log('Join the room successfully ✅')
+    //     }
+    // })
     // messageInput.style.visibility = 'hidden'
     // $('#wrap-emoji').hide()
 
@@ -1109,13 +1136,13 @@ groupSurecommandMobile.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
 
-    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
-        if (err) {
-            console.log('join room error')
-        } else {
-            console.log('Join the room successfully ✅')
-        }
-    })
+    // socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
+    //     if (err) {
+    //         console.log('join room error')
+    //     } else {
+    //         console.log('Join the room successfully ✅')
+    //     }
+    // })
     // messageInput.style.visibility = 'hidden'
     // $('#wrap-emoji').hide()
 
@@ -1152,19 +1179,8 @@ groupSurecommandMobile.addEventListener('click', () => {
 //
 
 if (isGroup) {
-    socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
-        if (err) {
-            console.log('join room error')
-        } else {
-            console.log('Join the room successfully ✅')
-
-            getHistoryMessagesGroup()
-            getLastMessageGroup()
-
-            // messageInput.style.visibility = 'hidden'
-            // $('#wrap-emoji').hide()
-        }
-    })
+    getHistoryMessagesGroup()
+    getLastMessageGroup()
 }
 
 // check new-mess

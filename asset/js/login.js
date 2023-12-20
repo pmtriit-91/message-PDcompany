@@ -4,7 +4,7 @@ const passwordInput = document.getElementById("exampleInputPassword")
 const baseUrl = 'https://www.surecommand.com/mobileapp/android.php'
 
 document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
 
     if (token) {
         window.location = '/'
@@ -36,8 +36,8 @@ form.addEventListener("submit", function (event) {
         .then(response => {
             console.log(response)
             if (response.data.code === 1) {
-                localStorage.setItem('token', JSON.stringify(response.data.chatToken))
-                localStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
+                sessionStorage.setItem('token', JSON.stringify(response.data.chatToken))
+                sessionStorage.setItem('dataUser', JSON.stringify(response.data.userInfo))
                 window.location = '/'
             } else if (response.data.code === 0) {
                 console.error('login failed :', response.data.msg)
