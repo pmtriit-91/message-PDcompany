@@ -465,6 +465,16 @@ function uploadFile(file, friend) {
 let isMediaSendGroup = false
 let dataMedia
 
+function addImageDeleteEvent() {
+    const images = document.querySelectorAll('.container-image')
+    images.forEach(image => {
+        const deleteButton = image.querySelector('.btn-del-image')
+        deleteButton.addEventListener('click', function () {
+            image.remove()
+        })
+    })
+}
+
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -491,6 +501,7 @@ function uploadFileGroup(file) {
 
                 const processMedia = () => {
                     $(document).on('click', '.btn-del-image', function () {
+                        // addImageDeleteEvent()
                         const mediaWrapper = $(this).closest('.container-image')
                         mediaWrapper.remove()
                         sendMessageButton.removeEventListener('click', sendMsg)
