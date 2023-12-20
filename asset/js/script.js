@@ -1059,8 +1059,13 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             content: tooltipTime,
             theme: 'material',
             animation: 'scale',
-            allowHTML: false,
+            // allowHTML: false,
             // trigger: 'click'
+            sticky: true,
+            followCursor: false,
+            allowHTML: true,
+            interactive: true,
+            placement: 'top-start'
         })
 
         if (isUploadWaitImage || isUploaded) {
