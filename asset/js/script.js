@@ -1420,7 +1420,12 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
         content: tooltipTime,
         theme: 'material',
         animation: 'scale',
-        // trigger: 'click'
+        // trigger: 'click',
+        sticky: true,
+        followCursor: false,
+        allowHTML: true,
+        interactive: true,
+        placement: 'top-start'
     })
 
     //add DOM
