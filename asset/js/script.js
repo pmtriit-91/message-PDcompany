@@ -1136,16 +1136,6 @@ groupSurecommandMobile.addEventListener('click', () => {
     isGroup = true
     console.log(isGroup)
 
-    // socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
-    //     if (err) {
-    //         console.log('join room error')
-    //     } else {
-    //         console.log('Join the room successfully ✅')
-    //     }
-    // })
-    // messageInput.style.visibility = 'hidden'
-    // $('#wrap-emoji').hide()
-
     // create head-img
     $('.custom-img-head').html(`
         <div class="col-10 col-md-8 col-lg-6 custom-img custom-img-head">
@@ -1210,7 +1200,7 @@ function getLastMessageGroup() {
                 chatWrapper.addEventListener('scroll', () => {
                     if (chatWrapper.scrollTop === 0) {
                         isScrolling = true
-                        lastMessageId = Math.max(0, lastMessageId - 10)
+                        lastMessageId = Math.max(0, lastMessageId - 20)
                         getHistoryMessagesGroup(lastMessageId, isScrolling)
                     }
                 })
@@ -1219,34 +1209,32 @@ function getLastMessageGroup() {
     })
 }
 
-//get history mess
 function getHistoryMessagesGroup(id, isScrolling) {
-    socket.emit('load_company_chat', { start: ++id, numView: 10, cID: dataUser.cid }, (err, res) => {
+    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             if (res) {
-                // console.log('history', res);
-                const arrReverse = res.reverse()
-                const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
+                const newMessages = res.filter(message => !loadedMessageIDs.includes(message.id))
+
+                newMessages.sort((a, b) => {
+                    if (isScrolling) {
+                        return new Date(b.createdAt) - new Date(a.createdAt)
+                    } else {
+                        return new Date(a.createdAt) - new Date(b.createdAt)
+                    }
+                })
 
                 newMessages.forEach(message => {
-                    // console.log(message);
-                    loadedMessageIDs.push(message.id)
-                    var isCurrentUser = message.userID === Number(dataUser.userID)
-
-                    if (isScrolling) {
-                        // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                        addMessageToChat(message.message, isCurrentUser, true, message)
-                    } else {
-                        // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                        addMessageToChat(message.message, isCurrentUser, false, message)
-                    }
+                    loadedMessageIDs.push(message.id);
+                    const isCurrentUser = message.userID === Number(dataUser.userID);
+                    addMessageToChat(message.message, isCurrentUser, isScrolling, message)
                 })
             }
         }
     })
 }
+
 
 //add mess UI
 function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup, isUploadedGroup, type) {
@@ -1442,7 +1430,8 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
     messageDiv.appendChild(messageTextDiv)
 
     if (isScrolling) {
-        chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        // chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        chatWrapper.prepend(messageDiv)
         chatWrapper.scrollTop = chatWrapper.clientHeight
     } else {
         chatWrapper.appendChild(messageDiv)
