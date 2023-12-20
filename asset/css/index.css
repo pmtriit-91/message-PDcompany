@@ -103,9 +103,9 @@
     text-overflow: ellipsis;
 }
 
-.custom-img-head {
+/* .custom-img-head {
     cursor: pointer;
-}
+} */
 
 .card-friend {
     justify-content: center;
@@ -433,6 +433,14 @@
 /* canvas custome */
 .canvas-custome {
     width: 70% !important;
+}
+
+.btn-menu:active {
+    outline: none;
+}
+
+.btn-menu:hover {
+    color: #00416A;
 }
 
 @keyframes mercuryTypingAnimation {
