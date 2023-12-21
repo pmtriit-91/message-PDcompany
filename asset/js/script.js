@@ -1,5 +1,5 @@
 import { randomAvatarURL, randomName } from './randomName.js'
-console.log = function () { }
+// console.log = function () { }
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
@@ -1071,7 +1071,8 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
                 break
         }
 
-        var avatarImg = $("<img>").attr("src", randomAvatarURL).addClass("avatar-chat")
+        createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
+        var avatarImg = $("<img>").attr("src", avatarURL).addClass("avatar-chat")
 
         // create text time
         const timestampP = document.createElement('p')
@@ -1291,7 +1292,12 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
 
     // create div avatar
     const avatarImg = document.createElement('img')
-    avatarImg.src = randomAvatarURL
+    const friend = listFriends.find((friend) => {
+        return friend.id === Number(messageData.userID)
+    })
+    console.log(friend);
+    // friend.image2 && createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
+    // avatarImg.src = avatarURL
     avatarImg.alt = 'avatar'
     avatarImg.classList.add('avatar-chat')
 
