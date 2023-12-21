@@ -1,5 +1,5 @@
 import { randomAvatarURL, randomName } from './randomName.js'
-// console.log = function () { }
+console.log = function () { }
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
@@ -72,10 +72,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
         window.location = '/login.html'
     }
-    // buttonLogout[0].addEventListener('click', () => {
-    //     sessionStorage.removeItem('token')
-    //     window.location = '/login.html'
-    // })
+    buttonLogout[0].addEventListener('click', () => {
+        sessionStorage.removeItem('token')
+        window.location = '/login.html'
+    })
 
     //join room
     socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
