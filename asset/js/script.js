@@ -19,7 +19,7 @@ let currentFriend = {
 //token and userInfo from app
 const token = JSON.parse(sessionStorage.getItem('token'))
 const dataUser = JSON.parse(sessionStorage.getItem('dataUser'))
-const avatarPath = dataUser.image2
+const avatarPath = dataUser && dataUser.image2
 
 //state avatar
 let avatarURL
