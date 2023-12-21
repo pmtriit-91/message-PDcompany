@@ -193,7 +193,7 @@ axios.post(urlFullInfo, {
                         </div>
                     </div>
                 `
-            if (window.innerWidth <= 576) {
+            if (window.innerWidth <= 767) {
                 bodyLeft.remove()
                 bodyLeftMobile.appendChild(newCard)
             } else {
