@@ -464,6 +464,16 @@ function uploadFile(file, friend) {
 let isMediaSendGroup = false
 let dataMedia
 
+function addImageDeleteEvent() {
+    const images = document.querySelectorAll('.container-image')
+    images.forEach(image => {
+        const deleteButton = image.querySelector('.btn-del-image')
+        deleteButton.addEventListener('click', function () {
+            image.remove()
+        })
+    })
+}
+
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -490,6 +500,7 @@ function uploadFileGroup(file) {
 
                 const processMedia = () => {
                     $(document).on('click', '.btn-del-image', function () {
+                        // addImageDeleteEvent()
                         const mediaWrapper = $(this).closest('.container-image')
                         mediaWrapper.remove()
                         sendMessageButton.removeEventListener('click', sendMsg)
@@ -1057,8 +1068,13 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
             content: tooltipTime,
             theme: 'material',
             animation: 'scale',
-            allowHTML: false,
+            // allowHTML: false,
             // trigger: 'click'
+            sticky: true,
+            followCursor: false,
+            allowHTML: true,
+            interactive: true,
+            placement: 'top-start'
         })
 
         if (isUploadWaitImage || isUploaded) {
@@ -1207,33 +1223,32 @@ function getLastMessageGroup() {
     })
 }
 
-//get history mess
 function getHistoryMessagesGroup(id, isScrolling) {
-    socket.emit('load_company_chat', { start: id, numView: 20, cID: dataUser.cid }, (err, res) => {
+    socket.emit('load_company_chat', { start: ++id, numView: 20, cID: dataUser.cid }, (err, res) => {
         if (err) {
             console.log(err)
         } else {
             if (res) {
-                console.log('history', res);
-                const arrReverse = res.reverse()
-                const newMessages = arrReverse.filter(message => !loadedMessageIDs.includes(message.id))
+                const newMessages = res.filter(message => !loadedMessageIDs.includes(message.id))
+
+                newMessages.sort((a, b) => {
+                    if (isScrolling) {
+                        return new Date(b.createdAt) - new Date(a.createdAt)
+                    } else {
+                        return new Date(a.createdAt) - new Date(b.createdAt)
+                    }
+                })
 
                 newMessages.forEach(message => {
-                    loadedMessageIDs.push(message.id)
-                    var isCurrentUser = message.userID === Number(dataUser.userID)
-
-                    if (isScrolling) {
-                        // Nếu đang cuộn lên trên, chèn tin nhắn vào đầu
-                        addMessageToChat(message.message, isCurrentUser, true, message)
-                    } else {
-                        // Nếu không cuộn, thêm tin nhắn vào dưới cùng
-                        addMessageToChat(message.message, isCurrentUser, false, message)
-                    }
+                    loadedMessageIDs.push(message.id);
+                    const isCurrentUser = message.userID === Number(dataUser.userID);
+                    addMessageToChat(message.message, isCurrentUser, isScrolling, message)
                 })
             }
         }
     })
 }
+
 
 //add mess UI
 function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUploadWaitGroup, isUploadedGroup, type) {
@@ -1420,7 +1435,12 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
         content: tooltipTime,
         theme: 'material',
         animation: 'scale',
-        // trigger: 'click'
+        // trigger: 'click',
+        sticky: true,
+        followCursor: false,
+        allowHTML: true,
+        interactive: true,
+        placement: 'top-start'
     })
 
     //add DOM
@@ -1430,7 +1450,8 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
     messageDiv.appendChild(messageTextDiv)
 
     if (isScrolling) {
-        chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        // chatWrapper.insertBefore(messageDiv, chatWrapper.firstElementChild)
+        chatWrapper.prepend(messageDiv)
         chatWrapper.scrollTop = chatWrapper.clientHeight
     } else {
         chatWrapper.appendChild(messageDiv)
