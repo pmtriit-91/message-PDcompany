@@ -59,7 +59,7 @@ form.addEventListener("submit", function (event) {
 
 // axios.post(baseUrl, {
 //     "head": {
-//         "code": 126,
+//         "code": 126, //server PHP
 //         "token": token,
 //         "version": 2,
 //         "cID": Number(cid),

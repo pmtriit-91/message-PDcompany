@@ -1,6 +1,11 @@
 import { randomAvatarURL, randomName } from './randomName.js'
 // console.log = function () { }
 
+// baseUrl
+const baseUrl = 'https://node.surecommand.com/'
+const urlFullInfo = 'https://www.surecommand.com/mobileapp/android.php'
+const urlAvatarPHP = 'https://www.surecommand.com/profile_image_android.php?'
+
 const chatWrapper = document.querySelector('.wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
 const groupSurecommandMobile = document.getElementById('card-surecommand-mobile')
@@ -14,12 +19,10 @@ let currentFriend = {
 //token and userInfo from app
 const token = JSON.parse(sessionStorage.getItem('token'))
 const dataUser = JSON.parse(sessionStorage.getItem('dataUser'))
+const avatarPath = dataUser.image2
 
-// if (!token) {
-//     socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
-//         console.log('Leaving room...', data)
-//     })
-// }
+//state avatar
+let avatarURL
 
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
@@ -60,17 +63,19 @@ let currentNewChatDiv = null
 //count mess unseen
 let arrayFriendID = []
 
-// baseUrl
-const baseUrl = 'https://node.surecommand.com/'
-const urlFullInfo = 'https://www.surecommand.com/mobileapp/android.php'
+function createAvatarUrl(baseUrlMedia, avatarPath, userID, token) {
+    return avatarURL = baseUrlMedia + 'img=' + avatarPath + '&gallery=2&'
+        + 'sid=' + Number(userID) + '&token=' + token.slice(1, -1)
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
         window.location = '/login.html'
     }
-    buttonLogout[0].addEventListener('click', () => {
-        sessionStorage.removeItem('token')
-        window.location = '/login.html'
-    })
+    // buttonLogout[0].addEventListener('click', () => {
+    //     sessionStorage.removeItem('token')
+    //     window.location = '/login.html'
+    // })
 
     //join room
     socket.emit('new_join', { cID: Number(dataUser.cid) }, (err, data) => {
@@ -102,7 +107,14 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem('userInfo', JSON.stringify(response.data))
         })
         .catch(error => console.log(error))
+
+    //avatar chat
+    const imgAvatarDOM = document.getElementById('avatar')
+    createAvatarUrl(urlAvatarPHP, avatarPath, dataUser.userID, token)
+    imgAvatarDOM.style.backgroundImage = `url(${avatarURL})`
 })
+
+console.log(dataUser)
 
 //event socket
 var socket = io.connect(baseUrl, {
@@ -159,10 +171,11 @@ axios.post(urlFullInfo, {
 
             newCard.id = `friend-${friend.id}`
 
+            createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
             newCard.innerHTML = `
                     <div class="row row-card-avatar g-0">
                         <div id="friend-img-${friend.id}" class="col-3 col-md-3 custom-img">
-                            <img src="./asset/image/avatar${array[randomIndex]}.jpeg" class="img-fluid avatar-group" alt="...">
+                            <img src="${avatarURL}" class="img-fluid avatar-group" alt="...">
                         </div>
                         <div class="col-9 col-md-9 d-flex align-items-center">
                             <div class="card-body" id="card-body-${friend.id}">
@@ -206,6 +219,7 @@ axios.post(urlFullInfo, {
 
             //click card
             $(document).on("click", `#friend-${friend.id}`, function () {
+                createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
                 if (isGroup) {
                     isGroup = false
                     // socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
@@ -265,7 +279,7 @@ axios.post(urlFullInfo, {
 
                 //action switch headCardImg
                 headCardImg.html(`
-                    <img src="./asset/image/avatar4.jpeg" class=" img-fluid avatar-group" alt="...">
+                    <img src=${avatarURL} class=" img-fluid avatar-group" alt="...">
                     <div class="card-head-custom">
                         <h5 class="card-title" style="text-align: left;">${friend.f_name}</h5>
                     </div>
@@ -280,7 +294,7 @@ axios.post(urlFullInfo, {
                 arrayPrivate.push(currentNewChatDiv)
                 // Scroll về cuối cùng của newChatDiv
                 const scrollHeight = currentNewChatDiv[0].scrollHeight
-                const clientHeight = currentNewChatDiv[0].clientHeight
+                // const clientHeight = currentNewChatDiv[0].clientHeight
                 currentNewChatDiv[0].scrollTop = scrollHeight
 
                 //xóa active va hide group
@@ -385,6 +399,18 @@ socket.on('connect', () => {
 let pathMedia
 let isMediaSend = false
 
+//xu ly xoa anh
+function addImageDeleteEvent() {
+    $(document).off('click', '.container-image .btn-del-image')
+    $(document).on('click', '.container-image .btn-del-image', deleteImageHandler)
+}
+
+function deleteImageHandler(event) {
+    const deleteButton = event.target
+    const image = deleteButton.closest('.container-image')
+    image.remove()
+}
+
 function sendImageMessage(friend, currentNewChatDiv, mediaID, pathMedia, dataMediaPrivate, type) {
     if (!isGroup && !isMediaSend) {
         const activeCard = document.querySelector('.card-friend.active')
@@ -426,16 +452,17 @@ function uploadFile(file, friend) {
 
                 //del image
                 $(document).on('click', '.btn-del-image', function () {
+                    addImageDeleteEvent()
                     if (!isGroup) {
-                        const imageWrapper = $('.container-image')
-                        imageWrapper.remove()
+                        // const imageWrapper = $('.container-image')
+                        // imageWrapper.remove()
+                        sendMessageButton.removeEventListener('click', sendImage)
                     }
                     // const imageWrapper = $(this).closest('.container-image')
                     // imageWrapper.remove()
                     // messageInput.disabled = false
                     // remove event click btn-del
                     $(document).off('click', '.btn-del-image')
-                    sendMessageButton.removeEventListener('click', sendImage)
                     isMediaSend = false
                 })
 
@@ -464,16 +491,6 @@ function uploadFile(file, friend) {
 let isMediaSendGroup = false
 let dataMedia
 
-function addImageDeleteEvent() {
-    const images = document.querySelectorAll('.container-image')
-    images.forEach(image => {
-        const deleteButton = image.querySelector('.btn-del-image')
-        deleteButton.addEventListener('click', function () {
-            image.remove()
-        })
-    })
-}
-
 function uploadFileGroup(file) {
     const data = new FormData()
     data.append('mediaSendInfo', JSON.stringify({
@@ -490,6 +507,7 @@ function uploadFileGroup(file) {
             dataMedia = JSON.parse(xhr.responseText)
             if (xhr.status === 200) {
                 console.log('Upload thành công!')
+                console.log(dataMedia)
                 pathMedia = JSON.stringify(dataMedia.data.content.replace('public/', ''))
                 const type = dataMedia.data.type
                 isAttack = true
@@ -499,11 +517,11 @@ function uploadFileGroup(file) {
                 // messageInput.disabled = true
 
                 const processMedia = () => {
+                    addImageDeleteEvent()
                     $(document).on('click', '.btn-del-image', function () {
-                        // addImageDeleteEvent()
-                        const mediaWrapper = $(this).closest('.container-image')
-                        mediaWrapper.remove()
-                        sendMessageButton.removeEventListener('click', sendMsg)
+                        // const mediaWrapper = $(this).closest('.container-image')
+                        // mediaWrapper.remove()
+                        isGroup && sendMessageButton.removeEventListener('click', sendMsg)
                         // messageInput.disabled = false
 
                         // remove event click btn-del
@@ -549,8 +567,10 @@ $('#open-image-upload').click(function () {
     fileUploader.click()
 })
 
+let x = []
 function handleFileChange() {
-    console.log(fileUploader.files[0])
+    x.push(Array(fileUploader.files))
+    console.log(x)
     const file = fileUploader.files[0]
     if (file) {
 
@@ -584,6 +604,7 @@ function handleFileChange() {
                 </svg>
             `)
             divChatCurrent.append(messageDiv)
+            divChatCurrent[0].scrollTop = divChatCurrent[0].scrollHeight
         }
 
         if (isGroup) {
@@ -934,6 +955,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         if (isUploadWaitImage) {
             let url = baseUrl + data
             $(".container-wait").remove()
+
             messageDiv.addClass("d-flex flex-row justify-content-start wrap-user container-image")
 
             switch (type) {
@@ -1018,8 +1040,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
 
                 messageDiv.addClass("d-flex flex-row justify-content-" + (isCurrentUser ? "end" : "start") + " wrap-user")
                 messageTextDiv.html(`
-                    <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}  
-                    ${isCurrentUser ? 'text-white rounded-3' : 'bg-light rounded-3'}">
+                    <img id="image-${friend.id}-${data.id}" src=${urlImage} class="image-sended text-start small p-2 ${isCurrentUser ? null : 'ms-2'}">
                     </img>`)
 
                 // modal show fullsize image
@@ -1240,8 +1261,8 @@ function getHistoryMessagesGroup(id, isScrolling) {
                 })
 
                 newMessages.forEach(message => {
-                    loadedMessageIDs.push(message.id);
-                    const isCurrentUser = message.userID === Number(dataUser.userID);
+                    loadedMessageIDs.push(message.id)
+                    const isCurrentUser = message.userID === Number(dataUser.userID)
                     addMessageToChat(message.message, isCurrentUser, isScrolling, message)
                 })
             }
@@ -1321,7 +1342,7 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
             break
         case 'text':
             {
-                console.log(messageData);
+                // console.log(messageData);
                 messageTextDiv.innerHTML = (`
                 <p class="text-start small p-2 ${isCurrentUser ? null : 'ms-2'} mb-1 
                 ${isCurrentUser ? 'bg-primary text-white rounded-3' : 'bg-light rounded-3'}">${messageData.message}</p>
