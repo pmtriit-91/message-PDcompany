@@ -237,7 +237,7 @@
     /*  */
     position: sticky;
     bottom: 0;
-    z-index: 9999;
+    z-index: 99;
     background: #fff;
 }
 
@@ -250,10 +250,10 @@
 }
 
 .avatar-chat {
+    background-size: cover;
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    object-fit: cover;
 }
 
 #avatar {

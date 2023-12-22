@@ -3,8 +3,8 @@ import { randomAvatarURL, randomName } from './randomName.js'
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
-const urlFullInfo = 'https://www.surecommand.com/mobileapp/android.php'
-const urlAvatarPHP = 'https://www.surecommand.com/profile_image_android.php?'
+const baseURLAndroidPHP = 'https://www.surecommand.com/mobileapp/android.php'
+const baseURLAvatarPHP = 'https://www.surecommand.com/profile_image_android.php?'
 
 const chatWrapper = document.querySelector('.wrapper-chat')
 const groupSurecommand = document.getElementById('card-surecommand')
@@ -23,6 +23,9 @@ const avatarPath = dataUser && dataUser.image2
 
 //state avatar
 let avatarURL
+
+//list employees
+let employees = []
 
 //fake userID
 const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
@@ -68,6 +71,31 @@ function createAvatarUrl(baseUrlMedia, avatarPath, userID, token) {
         + 'sid=' + Number(userID) + '&token=' + token.slice(1, -1)
 }
 
+//get list employees
+console.log('dataUser', dataUser);
+axios.post(baseURLAndroidPHP, {
+    "head": {
+        "code": 50,
+        "cID": Number(dataUser.cid),
+        "token": token,
+        "tokenFcm": '',
+        "userID": Number(dataUser.userID),
+        "version": 2
+    }
+}, {
+    headers: {
+        "Content-Type": "application/json",
+        // Authorization: 'Bearer ' + token,
+    },
+    withCredentials: true,
+})
+    .then(response => {
+        employees = [...response.data.employees]
+        console.log('employees', employees);
+    })
+    .catch(error => console.log(error))
+
+//loaded DOM
 document.addEventListener("DOMContentLoaded", () => {
     if (!token) {
         window.location = '/login.html'
@@ -86,11 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     })
 
-    //get full user
-    axios.post(urlFullInfo, {
+    //get Info-user
+    axios.post(baseURLAndroidPHP, {
         "head": {
             "code": 126,
-            "cID": 3322,
+            "cID": Number(dataUser.cid),
             "token": token,
             "tokenFcm": '',
             "userID": dataUser.userID,
@@ -99,22 +127,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }, {
         headers: {
             "Content-Type": "application/json",
-            // Authorization: 'Bearer ' + token,
         },
         withCredentials: true,
     })
         .then(response => {
             localStorage.setItem('userInfo', JSON.stringify(response.data))
+            console.log('userInfo', response.data);
         })
         .catch(error => console.log(error))
 
     //avatar chat
     const imgAvatarDOM = document.getElementById('avatar')
-    createAvatarUrl(urlAvatarPHP, avatarPath, dataUser.userID, token)
+    createAvatarUrl(baseURLAvatarPHP, avatarPath, dataUser.userID, token)
     imgAvatarDOM.style.backgroundImage = `url(${avatarURL})`
 })
-
-console.log(dataUser)
 
 //event socket
 var socket = io.connect(baseUrl, {
@@ -139,12 +165,12 @@ let listFriends = []
 const arrayPrivate = []
 const bodyLeft = document.querySelector('#body-left')
 const bodyLeftMobile = document.querySelector('#body-left-mobile')
-axios.post(urlFullInfo, {
+axios.post(baseURLAndroidPHP, {
     "head": {
         "code": 145, //code 145: list friend
         "userID": dataUser.userID,
         "token": token,
-        "cID": dataUser.cID,
+        "cID": dataUser.cid,
         "version": 2
     },
     "body": {}
@@ -155,6 +181,7 @@ axios.post(urlFullInfo, {
 })
     .then(response => {
         listFriends = [...response.data.members]
+        console.log(listFriends);
         const usedIndexes = []
         listFriends.forEach((friend) => {
             const array = [4, 5, 6]
@@ -171,7 +198,7 @@ axios.post(urlFullInfo, {
 
             newCard.id = `friend-${friend.id}`
 
-            createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
+            createAvatarUrl(baseURLAvatarPHP, friend.image2, friend.id, token)
             newCard.innerHTML = `
                     <div class="row row-card-avatar g-0">
                         <div id="friend-img-${friend.id}" class="col-3 col-md-3 custom-img">
@@ -219,7 +246,7 @@ axios.post(urlFullInfo, {
 
             //click card
             $(document).on("click", `#friend-${friend.id}`, function () {
-                createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
+                createAvatarUrl(baseURLAvatarPHP, friend.image2, friend.id, token)
                 if (isGroup) {
                     isGroup = false
                     // socket.emit('leave_room', { cID: Number(dataUser.cid) }, (err, data) => {
@@ -1071,7 +1098,7 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
                 break
         }
 
-        createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
+        createAvatarUrl(baseURLAvatarPHP, friend.image2, friend.id, token)
         var avatarImg = $("<img>").attr("src", avatarURL).addClass("avatar-chat")
 
         // create text time
@@ -1291,15 +1318,19 @@ function addMessageToChat(message, isCurrentUser, isScrolling, messageData, isUp
     }
 
     // create div avatar
-    const avatarImg = document.createElement('img')
-    const friend = listFriends.find((friend) => {
-        return friend.id === Number(messageData.userID)
+    const avatarImg = document.createElement('div')
+    employees.length > 0 && employees.forEach((elm) => {
+        if (elm.id === messageData.userID) {
+            createAvatarUrl(baseURLAvatarPHP, elm.image2, elm.id, token)
+            avatarImg.style.backgroundImage = `url(${avatarURL})`
+        }
     })
-    console.log(friend);
-    // friend.image2 && createAvatarUrl(urlAvatarPHP, friend.image2, friend.id, token)
-    // avatarImg.src = avatarURL
-    avatarImg.alt = 'avatar'
     avatarImg.classList.add('avatar-chat')
+    // employer && createAvatarUrl(baseURLAvatarPHP, employer.image2, employer.id, token)
+    // const avatarImg = document.createElement('img')
+    // avatarImg.src = avatarURL
+    // avatarImg.alt = 'avatar'
+    // avatarImg.classList.add('avatar-chat')
 
     // create text content
     const messageTextDiv = document.createElement('div')
@@ -1502,7 +1533,7 @@ function sendMessage(data) {
         })
         const emitSendMsgGroup = (dataMedia) => {
             message = {
-                "cID": Number(data.data.cID),
+                "cID": Number(dataUser.cid),
                 "displayName": data.data.displayName,
                 'mediaID': data.data.id,
                 "message": dataMedia,
