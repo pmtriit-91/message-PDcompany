@@ -1,5 +1,4 @@
-import { randomAvatarURL, randomName } from './randomName.js'
-// console.log = function () { }
+console.log = function () { }
 
 // baseUrl
 const baseUrl = 'https://node.surecommand.com/'
@@ -26,10 +25,6 @@ let avatarURL
 
 //list employees
 let employees = []
-
-//fake userID
-const randomUser = Number(localStorage.getItem('userID') ? localStorage.getItem('userID') : Math.floor(Math.random() * 9000 + 1000))
-localStorage.setItem('userID', randomUser)
 
 //flag attack file
 let isAttack = false
@@ -1099,7 +1094,8 @@ const addMessPrivate = (data, newChatDiv, friend, isCurrentUser, isPrivateScroll
         }
 
         createAvatarUrl(baseURLAvatarPHP, friend.image2, friend.id, token)
-        var avatarImg = $("<img>").attr("src", avatarURL).addClass("avatar-chat")
+        var avatarImg = $("<div>").css("background-image", `url(${avatarURL})`).addClass("avatar-chat")
+        // var avatarImg = $("<img>").attr("src", avatarURL).addClass("avatar-chat")
 
         // create text time
         const timestampP = document.createElement('p')
